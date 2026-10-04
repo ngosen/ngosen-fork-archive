@@ -231,6 +231,10 @@ namespace fcitx {
          */
         bool handleUInputKeyPress(KeyEvent& event, KeySym currentSym, int sleepTime);
         bool waitForDeletion(KeyEvent* event, int sleepTime);
+        // True when a replacement can delete text: forwarded by the frontend or sent to the uinput server.
+        bool canSendBackspaces() const;
+        // Moves the commit of a timer-only wait later, never earlier.
+        void deferTimedCommit(uint64_t deliverAtUs);
 
         /**
          * @brief Performs text replacement via uinput.

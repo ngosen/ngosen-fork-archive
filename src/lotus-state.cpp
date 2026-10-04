@@ -30,7 +30,10 @@
 namespace fcitx {
     constexpr int MAX_SCAN_LENGTH = 15;
     // XKB keycode of BackSpace: evdev KEY_BACKSPACE (14) + 8.
-    constexpr int      BackSpaceKeycode = 22;
+    constexpr int BackSpaceKeycode = 22;
+    // XIM clients may hand a forwarded key back up to ~11 ms later (measured on XWayland GTK3); the
+    // commit must wait for it.
+    constexpr uint64_t XimForwardWaitUs = 15000;
 
     static inline bool isWordBreak(uint32_t ucs4) {
         // Space, tab, newline, carriage return, null, or punctuation/symbols (: ; < = > ? @)
@@ -866,6 +869,18 @@ namespace fcitx {
         return true;
     }
 
+    bool LotusState::canSendBackspaces() const {
+        return forwardsBackspaces(ic_) || uinput_client_fd_ >= 0;
+    }
+
+    void LotusState::deferTimedCommit(uint64_t deliverAtUs) {
+        if (surr_wait_timer_ && deliverAtUs > surr_wait_deliver_at_) {
+            surr_wait_deliver_at_ = deliverAtUs;
+            surr_wait_timer_->setTime(deliverAtUs);
+            surr_wait_timer_->setOneShot();
+        }
+    }
+
     void LotusState::send_select_uinput(int charCount) const {
         send_backspace_uinput(-charCount);
     }
@@ -1039,6 +1054,9 @@ namespace fcitx {
             }
             LOTUS_INFO("Forward " + std::to_string(count) + " backspaces");
             waitForDeletion(nullptr, 4);
+            if (getFrontendName(ic_) == "xim" && surr_wait_timer_only_ && surr_wait_timer_) {
+                deferTimedCommit(surr_wait_started_at_ + XimForwardWaitUs);
+            }
             return;
         }
         send_backspace_uinput(expected_backspaces_);
@@ -1111,7 +1129,7 @@ namespace fcitx {
             return;
         }
 
-        if (uinput_client_fd_ < 0) {
+        if (uinput_client_fd_ < 0 && !forwardsBackspaces(ic_)) {
             setup_uinput();
         }
 
@@ -1212,7 +1230,7 @@ namespace fcitx {
                     keyEvent.forward();
                 }
             } else {
-                if (uinput_client_fd_ < 0) {
+                if (!canSendBackspaces()) {
                     LOTUS_ERROR("Cannot connect to uinput server, commit rawkey");
                     std::string rawKey = keyEvent.key().toString();
                     if (!rawKey.empty()) {
@@ -1419,7 +1437,7 @@ namespace fcitx {
             return;
         }
 
-        if (uinput_client_fd_ < 0) {
+        if (uinput_client_fd_ < 0 && !forwardsBackspaces(ic_)) {
             connect_uinput_server();
         }
 
@@ -1459,7 +1477,7 @@ namespace fcitx {
             if (isMacroExpansion) {
                 LOTUS_INFO("Macro expansion: '" + oldPreBuffer_ + "' -> '" + commitStr + "'");
                 // Try uinput replacement first, fallback to deleteSurroundingText, then plain commit
-                if (uinput_client_fd_ >= 0 && !oldPreBuffer_.empty()) {
+                if (canSendBackspaces() && !oldPreBuffer_.empty()) {
                     performReplacement(oldPreBuffer_, commitStr);
                 } else if (ic_->capabilityFlags().test(CapabilityFlag::SurroundingText)) {
                     const auto& surrounding = ic_->surroundingText();
@@ -1529,7 +1547,7 @@ namespace fcitx {
             keyEvent.forward();
             return;
         }
-        if (uinput_client_fd_ < 0) {
+        if (uinput_client_fd_ < 0 && !forwardsBackspaces(ic_)) {
             LOTUS_WARN("Cannot connect to uinput server, reconnecting....");
             connect_uinput_server();
         }
@@ -1603,6 +1621,13 @@ namespace fcitx {
             }
         }
 
+        if (is_deleting_.load(std::memory_order_acquire) && surr_wait_timer_only_ && isBackspace(currentSym) && getFrontendName(ic_) == "xim" && forwardsBackspaces(ic_)) {
+            // The XIM client handed a forwarded backspace back unprocessed. Let it through so the
+            // client applies it, and commit after it.
+            LOTUS_INFO("XIM handed back a forwarded backspace");
+            deferTimedCommit(::fcitx::now(CLOCK_MONOTONIC) + XimForwardWaitUs);
+            return;
+        }
         if (is_deleting_.load(std::memory_order_acquire) && surr_wait_timer_only_) {
             // A key arrived during a timer-only wait. Replaying it via commitString loses text on
             // Chromium X11, so finish the wait, commit, then handle the key normally.
@@ -1882,7 +1907,7 @@ namespace fcitx {
                         oldPreBuffer_ = preeditStr;
                     }
                 } else {
-                    if (uinput_client_fd_ < 0) {
+                    if (!canSendBackspaces()) {
                         out += keyUtf8;
                         continue;
                     }

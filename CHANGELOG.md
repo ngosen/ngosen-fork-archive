@@ -15,6 +15,11 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 - README có mục "Gỡ": tắt máy chủ nền trước, lệnh gỡ gói cho từng bản phân phối, lệnh gỡ bản tự dựng,
   và hai thứ còn lại trên máy sau khi gỡ là tệp cấu hình và tài khoản `uinput_proxy` (#27).
 
+### Thay đổi
+
+- Mục Issues của kho được bật để nhận báo lỗi. Mẫu báo lỗi hỏi phiên bản và cách cài của Ngó Sen thay
+  cho các cách cài của bản gốc; README chỉ tới mục Issues (#30).
+
 ### Tài liệu
 
 - Nhật ký thay đổi có mục riêng cho bản `3.5.10-4`; những gì gộp sau bản đó nằm dưới "Chưa phát hành"
@@ -58,6 +63,9 @@ Bản phát hành đầu tiên có gói dựng sẵn:
 
 ### Bỏ
 
+- Chế độ Minecraft. Đặt nhầm chế độ này cho app thường thì app còn sót một chữ cũ. Cấu hình cũ đặt
+  Minecraft (`Mode=Minecraft`, số `8` trong luật theo app) tự đọc thành `Uinput`; chế độ này cũng biến
+  khỏi bảng chọn chế độ và cửa sổ cài đặt (#29).
 - Gói Nix (`flake.nix`, thư mục `nix/`) và hai quy trình kiểm Nix. Công thức này tải mã của bản gốc
   về dựng chứ không dựng mã của Ngó Sen, nên chưa bao giờ cho ra đúng bản này (#21).
 - Biến môi trường `LOTUS_SERVER_PATH`: mô-đun không còn kiểm đường dẫn của máy chủ nền (#9).

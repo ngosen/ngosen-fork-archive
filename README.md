@@ -10,7 +10,8 @@ kho thì giữ nguyên dòng bản quyền của tác giả trước.
 
 Bản này dùng hằng ngày trên Fedora 44 + KDE Plasma Wayland và CachyOS + KDE Plasma Wayland. Trên
 Ubuntu 24.04 + GNOME X11 mới dùng sơ, chưa dùng hằng ngày và chưa thử kỹ. Kho để công khai cho ai cần
-thì lấy dùng, **không hứa hỗ trợ**: mục Issues tắt và không có lịch phát hành.
+thì lấy dùng, **không hứa hỗ trợ** và không có lịch phát hành. Gặp lỗi thì báo ở mục
+[Issues](https://github.com/ngosen/ngosen/issues).
 
 Tên cũ của kho là `nguyenphivn/fcitx5-lotus`, rồi `nguyenphivn/LotusVibe` (từ 17/09/2026); link cũ
 vẫn tự chuyển về đây. Bên trong mã vẫn giữ tên `lotus` (tệp cấu hình, dịch vụ nền, icon) để nhặt được
@@ -53,6 +54,9 @@ Sen thì xem [mục Cài](#cài).
 - Không khuyên chế độ Surrounding Text: bản này không sửa chế độ đó.
 - Lời khuyên này chỉ đúng cho Ngó Sen. Super Smooth của bản gốc chưa có vá chống lặp chữ ở thanh
   địa chỉ trình duyệt.
+
+**Bỏ chế độ Minecraft (04/10).** Cấu hình cũ đặt chế độ Minecraft (tên `Minecraft` trong
+`lotus.conf`, số `8` trong `lotus-app-rules.conf`) tự đọc thành `Uinput`.
 
 **Chỉ còn một chế độ uinput (24/09).** Ba chế độ `Uinput (Smooth)`, `Uinput (Super Smooth)` và
 `Uinput (Slow)` của bản gốc đã gộp thành một chế độ `Uinput`, chạy đúng như Super Smooth. Cấu hình cũ

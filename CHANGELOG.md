@@ -18,7 +18,7 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 ### Thay đổi
 
 - Mục Issues của kho được bật để nhận báo lỗi. Mẫu báo lỗi hỏi phiên bản và cách cài của Ngó Sen thay
-  cho các cách cài của bản gốc; README chỉ tới mục Issues (#29).
+  cho các cách cài của bản gốc; README chỉ tới mục Issues (#30).
 
 ### Tài liệu
 

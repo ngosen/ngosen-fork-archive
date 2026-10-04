@@ -161,6 +161,10 @@ bool dropStaleSurroundingText(fcitx::InputContext* ic) {
     return true;
 }
 
+bool surroundingTextLags(fcitx::InputContext* ic) {
+    return getFrontendName(ic) == "ibus";
+}
+
 std::string stripDesktopSuffix(const std::string& program) {
     static constexpr std::string_view suffix = ".desktop";
     if (program.size() > suffix.size() && program.compare(program.size() - suffix.size(), suffix.size(), suffix) == 0) {

@@ -146,6 +146,16 @@ bool dropStaleSurroundingText(fcitx::InputContext* ic);
 std::string stripDesktopSuffix(const std::string& program);
 
 /**
+ * @brief Whether surrounding-text updates for this context arrive too late to wait on.
+ *
+ * Under GNOME, apps reach fcitx5 through GNOME Shell's IBus bridge, which forwards the
+ * client's surrounding text tens of milliseconds late and often one edit behind.
+ * @param ic Input context.
+ * @return True for contexts served by the IBus frontend.
+ */
+bool surroundingTextLags(fcitx::InputContext* ic);
+
+/**
  * @brief Key event entry for replay buffer.
  */
 struct KeyEntry {

@@ -711,18 +711,21 @@ namespace fcitx {
             // Some apps (Konsole) declare surrounding text but always send it empty; nothing can match,
             // so use the sleeping path.
             const bool emptySnapshot = ic_->surroundingText().text().empty();
-            if (engine_->config().waitSurroundingEvent.value() && emptySnapshot) {
+            // GNOME Shell relays surrounding text late and one step behind (or not at all), so an
+            // event-driven wait times out and commits ahead of the backspaces. Use the timed path there.
+            const bool waitEvent = engine_->config().waitSurroundingEvent.value() && !surroundingTextLags(ic_);
+            if (waitEvent && emptySnapshot) {
                 LOTUS_INFO("Surr wait skip: empty snapshot");
             }
             bool skipFrozenWait = false;
-            if (engine_->config().waitSurroundingEvent.value() && !emptySnapshot && surr_frozen_) {
+            if (waitEvent && !emptySnapshot && surr_frozen_) {
                 const int probeEvery = std::max(engine_->config().waitSurroundingProbeEvery.value(), 1);
                 ++surr_frozen_probe_count_;
                 if (surr_frozen_probe_count_ % probeEvery != 0) {
                     skipFrozenWait = true;
                 }
             }
-            if (engine_->config().waitSurroundingEvent.value() && !emptySnapshot && !skipFrozenWait) {
+            if (waitEvent && !emptySnapshot && !skipFrozenWait) {
                 // Sleeping blocks the single event loop, so no update could arrive. Return to the loop
                 // and watch for updates from now on; a fresh watcher ignores the previous replacement's
                 // late events. Keys typed meanwhile go to buffered_keys_.

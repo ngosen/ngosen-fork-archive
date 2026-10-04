@@ -155,6 +155,10 @@ std::string stripDesktopSuffix(const std::string& program);
  */
 bool surroundingTextLags(fcitx::InputContext* ic);
 
+// True when the frontend can deliver backspaces itself, so the uinput server is not needed: the
+// Wayland input-method frontend, and XIM clients running under XWayland.
+bool forwardsBackspaces(fcitx::InputContext* ic);
+
 /**
  * @brief Key event entry for replay buffer.
  */

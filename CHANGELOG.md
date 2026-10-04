@@ -20,6 +20,13 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 - Mục Issues của kho được bật để nhận báo lỗi. Mẫu báo lỗi hỏi phiên bản và cách cài của Ngó Sen thay
   cho các cách cài của bản gốc; README chỉ tới mục Issues (#30).
 
+### Sửa
+
+- Trên KDE Plasma (Wayland), bộ gõ tự gửi phím xoá cho ứng dụng thay vì nhờ máy chủ uinput, rồi chờ ứng
+  dụng báo đã xoá xong mới gõ chữ mới. Ứng dụng X11 chạy qua XWayland không còn bị kẹt, nuốt hết phím
+  sau một lần thay chữ. Ô soạn tin Facebook trên KDE xoá rồi gõ lại như ô thường, không bôi đen rồi gõ
+  đè nữa.
+
 ### Tài liệu
 
 - Nhật ký thay đổi có mục riêng cho bản `3.5.10-4`; những gì gộp sau bản đó nằm dưới "Chưa phát hành"

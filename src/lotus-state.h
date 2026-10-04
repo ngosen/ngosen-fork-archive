@@ -230,6 +230,7 @@ namespace fcitx {
          * @return True if event was handled.
          */
         bool handleUInputKeyPress(KeyEvent& event, KeySym currentSym, int sleepTime);
+        bool waitForDeletion(KeyEvent* event, int sleepTime);
 
         /**
          * @brief Performs text replacement via uinput.

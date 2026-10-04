@@ -165,6 +165,16 @@ bool surroundingTextLags(fcitx::InputContext* ic) {
     return getFrontendName(ic) == "ibus";
 }
 
+bool forwardsBackspaces(fcitx::InputContext* ic) {
+    const std::string frontend = getFrontendName(ic);
+    if (frontend == "wayland") {
+        return true;
+    }
+    // Over XWayland the uinput keys can lose a press and leave the sentinel wait stuck forever.
+    static const bool underWayland = std::getenv("WAYLAND_DISPLAY") != nullptr;
+    return frontend == "xim" && underWayland;
+}
+
 std::string stripDesktopSuffix(const std::string& program) {
     static constexpr std::string_view suffix = ".desktop";
     if (program.size() > suffix.size() && program.compare(program.size() - suffix.size(), suffix.size(), suffix) == 0) {

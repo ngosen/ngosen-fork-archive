@@ -2,7 +2,11 @@ name: Test Packaging Build
 
 on:
   push:
+    # Tags are built by the release workflow, which calls this one.
+    branches:
+      - '**'
   pull_request:
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && github.run_id || (github.head_ref || github.ref) }}

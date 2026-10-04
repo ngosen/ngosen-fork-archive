@@ -43,7 +43,12 @@ MODE_DEFAULT = -1  # UI special value for "Use Global Default"
 # Former Smooth (1), Super Smooth (3) and Minecraft (8) rules load as the single Uinput mode, as in
 # the addon.
 LEGACY_UINPUT_MODES = {1, 3, 8}
-LEGACY_UINPUT_MODE_NAMES = {"Uinput (Smooth)", "Uinput (Slow)", "Uinput (Super Smooth)", "Minecraft"}
+LEGACY_UINPUT_MODE_NAMES = {
+    "Uinput (Smooth)",
+    "Uinput (Slow)",
+    "Uinput (Super Smooth)",
+    "Minecraft",
+}
 
 MODE_INFO = {
     MODE_DEFAULT: {"title": "Default Typing", "icon": "preferences-system"},

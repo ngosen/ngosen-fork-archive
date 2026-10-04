@@ -10,6 +10,7 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <string_view>
 #include <fcitx-utils/utf8.h>
 #include <pwd.h>
 #include <sys/socket.h>
@@ -150,6 +151,22 @@ std::string getFrontendName(fcitx::InputContext* ic) {
         return "unknown";
     }
     return ic->frontend();
+}
+
+bool dropStaleSurroundingText(fcitx::InputContext* ic) {
+    if (ic == nullptr || ic->capabilityFlags().test(fcitx::CapabilityFlag::SurroundingText) || !ic->surroundingText().isValid()) {
+        return false;
+    }
+    ic->surroundingText().invalidate();
+    return true;
+}
+
+std::string stripDesktopSuffix(const std::string& program) {
+    static constexpr std::string_view suffix = ".desktop";
+    if (program.size() > suffix.size() && program.compare(program.size() - suffix.size(), suffix.size(), suffix) == 0) {
+        return program.substr(0, program.size() - suffix.size());
+    }
+    return program;
 }
 
 void eraseLastUtf8Codepoint(std::string& buffer) {

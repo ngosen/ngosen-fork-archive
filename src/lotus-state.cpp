@@ -987,7 +987,7 @@ namespace fcitx {
         }
         // LibreOffice runs Backspace as an async shortcut, so committed text overtakes it. Its
         // deleteSurroundingText applies at once, relative to the cursor, so use it there (#162).
-        const bool isLibreOffice = ic_->program() == "soffice" && realMode != LotusMode::Minecraft;
+        const bool isLibreOffice = stripDesktopSuffix(ic_->program()) == "soffice" && realMode != LotusMode::Minecraft;
         bool       isSurrText    = isLibreOffice ? ic_->capabilityFlags().test(CapabilityFlag::SurroundingText) :
                                                    engine_->config().useSurroundingTextIfPossible.value() && ic_->capabilityFlags().test(CapabilityFlag::SurroundingText) &&
                 surrounding.isValid() && !surrText.empty() && surrounding.cursor() == utf8::length(surrText);
@@ -995,7 +995,7 @@ namespace fcitx {
             ++expected_backspaces_;
             // Uinput skips the autofill guard except in address bars (#190): the Url flag on Chromium,
             // the autofill shape on Firefox.
-            const bool isFirefoxAddressBar = ic_->program() == "firefox" && textAfterCursorLooksLikeUrl(surrounding);
+            const bool isFirefoxAddressBar = stripDesktopSuffix(ic_->program()) == "firefox" && textAfterCursorLooksLikeUrl(surrounding);
             const bool checkAutofill       = realMode != LotusMode::Uinput || ic_->capabilityFlags().test(CapabilityFlag::Url) || isFirefoxAddressBar;
             if (checkAutofill) {
                 // Enable Autofill detection for all frontends (Wayland/IBus).

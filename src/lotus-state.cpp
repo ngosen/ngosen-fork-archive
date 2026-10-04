@@ -672,16 +672,14 @@ namespace fcitx {
                 flushDeferredCommit();
                 return false; // never reset a timer from inside its own callback
             });
-        } else if (!pending_commit_string_.empty()) {
-            ic_->commitString(pending_commit_string_);
-            LOTUS_INFO("Commit: " + pending_commit_string_);
         }
+        std::string text         = defer ? std::string() : std::move(pending_commit_string_);
         expected_backspaces_     = 0;
         current_backspace_count_ = 0;
         pending_commit_string_.clear();
         is_deleting_.store(false);
         if (!defer) {
-            replayBufferedKeys();
+            replayBufferedKeys(std::move(text));
         }
     }
 
@@ -692,11 +690,7 @@ namespace fcitx {
         deferred_commit_pending_ = false;
         std::string text         = std::move(deferred_commit_text_);
         deferred_commit_text_.clear();
-        if (!text.empty()) {
-            ic_->commitString(text);
-            LOTUS_INFO("Commit (deferred): " + text);
-        }
-        replayBufferedKeys();
+        replayBufferedKeys(std::move(text));
     }
 
     bool LotusState::handleUInputKeyPress(KeyEvent& event, KeySym currentSym, int sleepTime) {
@@ -942,15 +936,12 @@ namespace fcitx {
         if (!fromTimer && overtype_timer_) {
             overtype_timer_.reset(); // never reset a timer from inside its own callback
         }
-        if (!pending_commit_string_.empty()) {
-            ic_->commitString(pending_commit_string_);
-            LOTUS_INFO("Commit: " + pending_commit_string_);
-        }
+        std::string text = std::move(pending_commit_string_);
         pending_commit_string_.clear();
         expected_backspaces_     = 0;
         current_backspace_count_ = 0;
         is_deleting_.store(false);
-        replayBufferedKeys();
+        replayBufferedKeys(std::move(text));
     }
 
     void LotusState::performReplacement(const std::string& deletedPart, const std::string& addedPart) {
@@ -1787,9 +1778,21 @@ namespace fcitx {
         return !hasHistory_;
     }
 
-    void LotusState::replayBufferedKeys() {
+    void LotusState::replayBufferedKeys(std::string committed) {
+        // Under GNOME, mutter sends one text-input "done" per main-loop turn and clients keep only the
+        // last commit_string before it, so back-to-back commits lose all but the last ("đ" then "i"
+        // shows "i"). Send the replacement and the replayed keys as one commit.
+        std::string out   = std::move(committed);
+        auto        flush = [&] {
+            if (!out.empty()) {
+                ic_->commitString(out);
+                LOTUS_INFO("Commit: " + out);
+                out.clear();
+            }
+        };
         LOTUS_INFO("Starting replay buffered keys");
         if (buffered_keys_.empty()) {
+            flush();
             return;
         }
         auto keys = std::move(buffered_keys_);
@@ -1818,6 +1821,7 @@ namespace fcitx {
                             buffered_keys_.push_back(keys[j]);
                         }
                     }
+                    flush();
                     performReplacement(deletedPart, addedPart);
                     hasHistory_ = false;
                     ResetEngine(lotusEngine_.handle());
@@ -1825,7 +1829,7 @@ namespace fcitx {
                     return;
                 }
                 if (!addedPart.empty()) {
-                    ic_->commitString(addedPart);
+                    out += addedPart;
                 }
 
                 hasHistory_ = false;
@@ -1835,7 +1839,7 @@ namespace fcitx {
             }
 
             if (!processed) {
-                ic_->commitString(keyUtf8);
+                out += keyUtf8;
                 continue;
             }
 
@@ -1850,12 +1854,12 @@ namespace fcitx {
             if (compareAndSplitStrings(oldPreBuffer_, preeditStr, deletedPart, addedPart) != 0) {
                 if (deletedPart.empty()) {
                     if (!addedPart.empty()) {
-                        ic_->commitString(addedPart);
+                        out += addedPart;
                         oldPreBuffer_ = preeditStr;
                     }
                 } else {
                     if (uinput_client_fd_ < 0) {
-                        ic_->commitString(keyUtf8);
+                        out += keyUtf8;
                         continue;
                     }
 
@@ -1869,12 +1873,14 @@ namespace fcitx {
                             buffered_keys_.push_back(keys[j]);
                         }
                     }
+                    flush();
                     performReplacement(deletedPart, addedPart);
                     oldPreBuffer_ = preeditStr;
                     return;
                 }
             }
         }
+        flush();
         LOTUS_INFO("Replay buffered keys done");
     }
 

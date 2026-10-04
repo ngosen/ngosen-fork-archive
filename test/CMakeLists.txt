@@ -79,6 +79,8 @@ add_lotus_headless_test(super_smooth_settle_empty_composer
     super-smooth-settle-empty-composer.cpp "integration;smooth")
 add_lotus_headless_test(super_smooth_messenger_select_overtype
     super-smooth-messenger-select-overtype.cpp "integration;smooth")
+add_lotus_headless_test(replay_single_commit
+    replay-single-commit.cpp "integration;smooth")
 add_lotus_headless_test(super_smooth_settle_first_word
     super-smooth-settle-first-word.cpp "integration;smooth")
 add_lotus_headless_test(modifier_key_bypasses_surrounding_text

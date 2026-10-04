@@ -291,8 +291,9 @@ namespace fcitx {
          * When is_deleting_ is true, non-special keystrokes are buffered
          * instead of being discarded. This method replays them after the
          * replacement completes.
+         * @param committed Text to commit first; it goes out in the same commit as the replayed keys.
          */
-        void replayBufferedKeys();
+        void replayBufferedKeys(std::string committed = {});
 
         /**
          * @brief Checks if the key symbol matches the configured macro-skip modifier.

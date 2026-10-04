@@ -35,6 +35,12 @@ as_root() {
     fi
 }
 
+# The checksum list is the only thing vouching for the package, so neither may travel over plain
+# http, not even after a redirect. file:// stays usable for testing against a local directory.
+fetch() {
+    curl --proto '=https,file' --proto-redir '=https' --tlsv1.2 -fL "$@"
+}
+
 usage() {
     say "Cách dùng: install.sh [--yes]"
     say "  --yes   không hỏi lại trước khi cài"
@@ -117,7 +123,7 @@ confirm() {
 # Prints "<sha256> <file name>" for the one package matching this distribution.
 find_package() {
     local sums line count
-    sums=$(curl -fsSL "$RELEASE_URL/SHA256SUMS") ||
+    sums=$(fetch -sS "$RELEASE_URL/SHA256SUMS") ||
         die "không tải được danh sách gói từ $RELEASE_URL"
     line=$(printf '%s\n' "$sums" | grep -E "^[0-9a-f]{64}  ${pattern}\$" || true)
     count=$(printf '%s\n' "$line" | grep -c . || true)
@@ -127,7 +133,7 @@ find_package() {
 
 download_package() {
     local hash=$1 file=$2 got
-    curl -fL --progress-bar -o "$workdir/$file" "$RELEASE_URL/$file" ||
+    fetch --progress-bar -o "$workdir/$file" "$RELEASE_URL/$file" ||
         die "không tải được $file"
     got=$(sha256sum "$workdir/$file" | cut -d' ' -f1)
     [ "$got" = "$hash" ] || die "tệp $file tải về không khớp mã băm trong SHA256SUMS, không cài"
@@ -135,13 +141,13 @@ download_package() {
 
 install_with_pacman() {
     local package=$1
-    local -a old=() overwrite=() path_list=()
+    local -a addons=() overwrite=() path_list=()
 
-    # pacman answers "no" to the question about removing a conflicting package, so remove it first.
-    mapfile -t old < <(pacman -Qq | grep -x -E 'fcitx5-lotus(-openrc|-runit)?(-git|-bin)?' || true)
-    if [ "${#old[@]}" -gt 0 ]; then
-        say "Gỡ gói cũ: ${old[*]}"
-        as_root pacman -R --noconfirm "${old[@]}"
+    # The OpenRC and runit add-ons depend on fcitx5-lotus, so pacman refuses to replace it while
+    # they are installed. Stop before anything is changed.
+    mapfile -t addons < <(pacman -Qq | grep -x -E 'fcitx5-lotus-(openrc|runit)(-git|-bin)?' || true)
+    if [ "${#addons[@]}" -gt 0 ]; then
+        die "gói ${addons[*]} cần fcitx5-lotus nên chưa thay được. Gỡ trước rồi chạy lại: sudo pacman -R ${addons[*]}"
     fi
 
     # A build installed with "cmake --install" left the same files owned by no package. Only the
@@ -155,7 +161,10 @@ install_with_pacman() {
         done
     fi
 
-    as_root pacman -U --noconfirm "${overwrite[@]}" "$package"
+    # --noconfirm answers "no" when pacman asks whether to remove the conflicting fcitx5-lotus;
+    # --ask 4 turns that one answer into "yes". The old package then leaves in the same transaction
+    # that brings the new one, so a failed install leaves the machine as it was.
+    as_root pacman -U --noconfirm --ask 4 "${overwrite[@]}" "$package"
 }
 
 install_package() {
@@ -188,7 +197,12 @@ install_package() {
 
 # The server is a per-user service; installing the package neither enables nor restarts it.
 start_server() {
-    local user=${SUDO_USER:-$(id -un)}
+    local user
+    user=$(id -un)
+    # SUDO_USER says who called sudo; it means nothing unless this really runs as root.
+    if [ "$(id -u)" -eq 0 ] && [ -n "${SUDO_USER:-}" ] && id -u -- "$SUDO_USER" >/dev/null 2>&1; then
+        user=$SUDO_USER
+    fi
     if [ "$user" = root ]; then
         say "Đang chạy bằng root nên chưa bật máy chủ nền cho tài khoản nào. Bằng tài khoản thường, chạy:"
         say "  sudo systemctl enable --now $SERVICE@\$(whoami).service"
@@ -198,10 +212,10 @@ start_server() {
         say "Máy không chạy systemd; tự bật dịch vụ $SERVICE theo hệ thống khởi động của máy."
         return
     fi
-    as_root systemctl daemon-reload
     # A server left running from an older version keeps serving until it is restarted. The package
     # is already installed at this point, so a failure here is reported, not fatal.
-    if as_root systemctl enable "$SERVICE@$user.service" &&
+    if as_root systemctl daemon-reload &&
+        as_root systemctl enable "$SERVICE@$user.service" &&
         as_root systemctl restart "$SERVICE@$user.service"; then
         say "Máy chủ nền cho $user: $(systemctl is-active "$SERVICE@$user.service" || true)"
     else
@@ -221,6 +235,11 @@ main() {
         esac
         shift
     done
+
+    case "$RELEASE_URL" in
+        https://* | file:///*) ;;
+        *) die "NGOSEN_RELEASE_URL phải bắt đầu bằng https://" ;;
+    esac
 
     command -v curl >/dev/null 2>&1 || die "cần có curl"
     command -v sha256sum >/dev/null 2>&1 || die "cần có sha256sum"

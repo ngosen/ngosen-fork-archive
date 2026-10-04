@@ -105,9 +105,7 @@ class AboutPage(QWidget):
         btn_bug.setFixedWidth(200)
         btn_bug.clicked.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl(
-                    "https://github.com/ngosen/ngosen/issues/new?template=bug_report.yml"
-                )
+                QUrl("https://github.com/ngosen/ngosen/issues/new?template=bug_report.yml")
             )
         )
 
@@ -116,9 +114,7 @@ class AboutPage(QWidget):
         btn_feature.setFixedWidth(200)
         btn_feature.clicked.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl(
-                    "https://github.com/ngosen/ngosen/issues/new?template=feature_request.yml"
-                )
+                QUrl("https://github.com/ngosen/ngosen/issues/new?template=feature_request.yml")
             )
         )
 

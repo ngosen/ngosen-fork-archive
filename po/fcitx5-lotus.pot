@@ -328,7 +328,7 @@ msgstr ""
 msgid "Report Bug"
 msgstr ""
 
-#: settings-gui/ui/pages/about.py:114
+#: settings-gui/ui/pages/about.py:112
 msgid "Request Feature"
 msgstr ""
 

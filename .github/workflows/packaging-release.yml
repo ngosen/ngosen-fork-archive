@@ -19,6 +19,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Full history, so the tag can be compared with ban-dung.
+          fetch-depth: 0
+
+      # A tag on a commit that was never merged would publish packages built from unreviewed code.
+      - name: Refuse a tag that is not on ban-dung
+        run: |
+          git fetch --quiet origin +refs/heads/ban-dung:refs/remotes/origin/ban-dung
+          if ! git merge-base --is-ancestor HEAD origin/ban-dung; then
+            echo "::error::$GITHUB_REF_NAME points at a commit that is not on ban-dung"
+            exit 1
+          fi
 
       - name: Compare the tag with the packaging versions
         run: packaging/check-version.sh "${GITHUB_REF_NAME#ngosen-}"

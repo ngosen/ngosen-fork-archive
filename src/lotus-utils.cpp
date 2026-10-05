@@ -176,11 +176,6 @@ bool forwardsBackspaces(fcitx::InputContext* ic) {
         return underWayland;
     }
     if (frontend == "ibus") {
-        // On GNOME the IBus client is GNOME Shell, not the app; keep the server path there.
-        const char* desktop = std::getenv("XDG_CURRENT_DESKTOP");
-        if (desktop != nullptr && std::string_view(desktop).find("GNOME") != std::string_view::npos) {
-            return false;
-        }
         // SDL takes only commits and preedit from the IM.
         return !ic->program().starts_with("SDL");
     }

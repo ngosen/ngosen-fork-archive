@@ -6,6 +6,7 @@
 #include "lotus-utils.h"
 #include "test-input-context.h"
 
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -43,6 +44,113 @@ namespace {
         return out.empty() ? "(none)" : out;
     }
 
+    uint64_t nowUs() {
+        return fcitx::now(CLOCK_MONOTONIC);
+    }
+
+    // libuv timers count whole milliseconds from the loop's cached time, so a commit may land up to
+    // this much before its deadline. Only lower bounds on time are checked.
+    constexpr uint64_t ClockSlackUs = 3000;
+    constexpr uint64_t WaitUs       = 15000;
+
+    struct Harness {
+        fcitx::Instance&               instance;
+        fcitx::LotusEngine&            engine;
+        const fcitx::InputMethodEntry& entry;
+        TestInputContext&              context;
+
+        bool                           type(fcitx::KeySym symbol, bool accepted) {
+            return ::type(engine, entry, context, symbol, accepted);
+        }
+        // Pumps 1 ms at a time until done() or the deadline; returns the time the loop stopped.
+        template <typename Done>
+        uint64_t pumpUntil(Done done, uint64_t deadlineUs) {
+            while (!done() && nowUs() < deadlineUs)
+                pumpEventLoop(instance, 1);
+            return nowUs();
+        }
+    };
+
+    enum class Outcome {
+        Pass,
+        Fail,
+        Stalled
+    };
+
+    // Types "tie" + "e" and hands the forwarded backspace back about 8 ms later.
+    Outcome handBackOnce(Harness& h, bool firstWord) {
+        if (!firstWord && !h.type(FcitxKey_space, true))
+            return Outcome::Fail;
+        for (const char key : std::string("tie")) {
+            if (!h.type(static_cast<fcitx::KeySym>(key), false))
+                return Outcome::Fail;
+        }
+        const size_t   commitsBefore   = h.context.commits().size();
+        const size_t   forwardedBefore = h.context.forwarded().size();
+        const auto     committed       = [&] { return h.context.commits().size() > commitsBefore; };
+        const uint64_t replacedAt      = nowUs();
+        if (!h.type(FcitxKey_e, true))
+            return Outcome::Fail;
+        // The client is still waiting for the reply to that key; nothing may reach it before the reply.
+        if (h.context.forwarded().size() != forwardedBefore) {
+            reportFailure("no backspace forwarded inside the key event", "(none)", describeForwarded(h.context));
+            return Outcome::Fail;
+        }
+        // The forward is due before the commit, so nothing else can run first.
+        h.pumpUntil([&] { return h.context.forwarded().size() > forwardedBefore; }, replacedAt + 500000);
+        const auto& forwarded = h.context.forwarded();
+        if (forwarded.size() != forwardedBefore + 2 || forwarded[forwardedBefore].key().sym() != FcitxKey_BackSpace || forwarded[forwardedBefore].isRelease() ||
+            !forwarded.back().isRelease()) {
+            reportFailure("forward the backspace for e -> ê after the reply", "[BackSpace down][BackSpace up]", describeForwarded(h.context));
+            return Outcome::Fail;
+        }
+        const uint64_t stoppedAt = h.pumpUntil(committed, replacedAt + 8000);
+        if (committed()) {
+            if (stoppedAt - replacedAt + ClockSlackUs < WaitUs) {
+                reportFailure("no commit before the 15 ms wait ends", ">= 15000 us", std::to_string(stoppedAt - replacedAt) + " us");
+                return Outcome::Fail;
+            }
+            return Outcome::Stalled; // the machine stalled past the wait before the hand-back
+        }
+        const uint64_t handedBackAt = nowUs();
+        if (!h.type(FcitxKey_BackSpace, false))
+            return Outcome::Fail;
+        if (committed()) {
+            reportFailure("no commit when the backspace comes back", "no new commit", "commits=" + joinCommits(h.context));
+            return Outcome::Fail;
+        }
+        const uint64_t committedAt = h.pumpUntil(committed, handedBackAt + 500000);
+        if (!committed() || h.context.commits().back() != "ê") {
+            reportFailure("commit after the handed-back backspace", "last commit 'ê'", "commits=" + joinCommits(h.context));
+            return Outcome::Fail;
+        }
+        if (committedAt - handedBackAt + ClockSlackUs < WaitUs) {
+            reportFailure("commit at least 15 ms after the handed-back backspace", ">= 15000 us", std::to_string(committedAt - handedBackAt) + " us");
+            return Outcome::Fail;
+        }
+        return Outcome::Pass;
+    }
+
+    // Without a hand-back the commit still waits 15 ms, long enough for one that is on its way.
+    bool waitWithoutHandBack(Harness& h) {
+        if (!h.type(FcitxKey_space, true) || !h.type(FcitxKey_a, false))
+            return false;
+        const size_t   commitsBefore = h.context.commits().size();
+        const uint64_t replacedAt    = nowUs();
+        if (!h.type(FcitxKey_s, true))
+            return false;
+        const uint64_t committedAt = h.pumpUntil([&] { return h.context.commits().size() > commitsBefore; }, replacedAt + 500000);
+        if (h.context.commits().size() != commitsBefore + 1 || h.context.commits().back() != "á") {
+            reportFailure("commit a -> á", "last commit 'á'", "commits=" + joinCommits(h.context));
+            return false;
+        }
+        if (committedAt - replacedAt + ClockSlackUs < WaitUs) {
+            reportFailure("commit at least 15 ms after the forward", ">= 15000 us", std::to_string(committedAt - replacedAt) + " us");
+            return false;
+        }
+        return true;
+    }
+
 } // namespace
 
 int main() {
@@ -66,70 +174,16 @@ int main() {
     fcitx::InputContextEvent focus(context.get(), fcitx::EventType::InputContextFocusIn);
     engine.activate(entry, focus);
 
-    for (const char key : std::string("tie")) {
-        if (!type(engine, entry, *context, static_cast<fcitx::KeySym>(key), false))
-            return 1;
-    }
-    if (!type(engine, entry, *context, FcitxKey_e, true))
-        return 1;
-    // The client is still waiting for the reply to that key; nothing may reach it before the reply.
-    if (!context->forwarded().empty()) {
-        reportFailure("no backspace forwarded inside the key event", "(none)", describeForwarded(*context));
+    Harness h{testInstance.instance, engine, entry, *context};
+    // A machine that stalls past the wait before the hand-back proves nothing; try another word.
+    Outcome outcome = Outcome::Stalled;
+    for (int attempt = 0; attempt < 5 && outcome == Outcome::Stalled; ++attempt)
+        outcome = handBackOnce(h, attempt == 0);
+    if (outcome == Outcome::Stalled) {
+        reportFailure("hand the backspace back before the commit", "one of 5 attempts", "machine stalled every time");
         return 1;
     }
-    // Run the loop until the forward fires; it is due before the commit, so nothing else can run first.
-    for (int i = 0; i < 500 && context->forwarded().empty(); ++i)
-        pumpEventLoop(testInstance.instance, 1);
-    const auto& forwarded = context->forwarded();
-    if (forwarded.size() != 2 || forwarded[0].key().sym() != FcitxKey_BackSpace || forwarded[0].isRelease() || forwarded[1].key().sym() != FcitxKey_BackSpace ||
-        !forwarded[1].isRelease()) {
-        reportFailure("forward the backspace for e -> ê after the reply", "[BackSpace down][BackSpace up]", describeForwarded(*context));
+    if (outcome == Outcome::Fail || !waitWithoutHandBack(h))
         return 1;
-    }
-
-    // The client hands the backspace back right away (measured 3-50 ms on XWayland GTK3); it must pass
-    // through, not be swallowed, and push the commit at least 15 ms past it. Only lower bounds on time
-    // are checked, so a slow machine can make the commit later but never fail the test.
-    const uint64_t handedBackAt = fcitx::now(CLOCK_MONOTONIC);
-    if (!type(engine, entry, *context, FcitxKey_BackSpace, false))
-        return 1;
-    if (!context->commits().empty()) {
-        reportFailure("no commit when the backspace comes back", "commits=(none)", "commits=" + joinCommits(*context));
-        return 1;
-    }
-    uint64_t committedAt = 0;
-    for (int i = 0; i < 500 && context->commits().empty(); ++i) {
-        pumpEventLoop(testInstance.instance, 1);
-        committedAt = fcitx::now(CLOCK_MONOTONIC);
-    }
-    if (context->commits() != std::vector<std::string>{"ê"}) {
-        reportFailure("commit after the handed-back backspace", "commits=['ê']", "commits=" + joinCommits(*context));
-        return 1;
-    }
-    if (committedAt - handedBackAt < 15000) {
-        reportFailure("commit at least 15 ms after the handed-back backspace", ">= 15000 us", std::to_string(committedAt - handedBackAt) + " us");
-        return 1;
-    }
-
-    // Without a hand-back the commit still waits 15 ms, long enough for one that is on its way.
-    if (!type(engine, entry, *context, FcitxKey_space, true) || !type(engine, entry, *context, FcitxKey_a, false))
-        return 1;
-    const size_t   commitsBefore = context->commits().size();
-    const uint64_t replacedAt    = fcitx::now(CLOCK_MONOTONIC);
-    if (!type(engine, entry, *context, FcitxKey_s, true))
-        return 1;
-    committedAt = 0;
-    for (int i = 0; i < 500 && context->commits().size() == commitsBefore; ++i) {
-        pumpEventLoop(testInstance.instance, 1);
-        committedAt = fcitx::now(CLOCK_MONOTONIC);
-    }
-    if (context->commits().size() != commitsBefore + 1 || context->commits().back() != "á") {
-        reportFailure("commit a -> á", "last commit 'á'", "commits=" + joinCommits(*context));
-        return 1;
-    }
-    if (committedAt - replacedAt < 15000) {
-        reportFailure("commit at least 15 ms after the forward", ">= 15000 us", std::to_string(committedAt - replacedAt) + " us");
-        return 1;
-    }
     return 0;
 }

@@ -85,10 +85,12 @@ namespace {
             if (!h.type(static_cast<fcitx::KeySym>(key), false))
                 return Outcome::Fail;
         }
-        const size_t   commitsBefore   = h.context.commits().size();
-        const size_t   forwardedBefore = h.context.forwarded().size();
-        const auto     committed       = [&] { return h.context.commits().size() > commitsBefore; };
-        const uint64_t replacedAt      = nowUs();
+        const size_t commitsBefore   = h.context.commits().size();
+        const size_t forwardedBefore = h.context.forwarded().size();
+        const auto   committed       = [&] { return h.context.commits().size() > commitsBefore; };
+        // libuv dates a new timer from the loop's last run, and a real key arrives inside one.
+        pumpEventLoop(h.instance, 1);
+        const uint64_t replacedAt = nowUs();
         if (!h.type(FcitxKey_e, true))
             return Outcome::Fail;
         // The client is still waiting for the reply to that key; nothing may reach it before the reply.
@@ -135,8 +137,10 @@ namespace {
     bool waitWithoutHandBack(Harness& h) {
         if (!h.type(FcitxKey_space, true) || !h.type(FcitxKey_a, false))
             return false;
-        const size_t   commitsBefore = h.context.commits().size();
-        const uint64_t replacedAt    = nowUs();
+        const size_t commitsBefore = h.context.commits().size();
+        // libuv dates a new timer from the loop's last run, and a real key arrives inside one.
+        pumpEventLoop(h.instance, 1);
+        const uint64_t replacedAt = nowUs();
         if (!h.type(FcitxKey_s, true))
             return false;
         const uint64_t committedAt = h.pumpUntil([&] { return h.context.commits().size() > commitsBefore; }, replacedAt + 500000);

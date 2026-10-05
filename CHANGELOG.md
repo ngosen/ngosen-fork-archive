@@ -33,10 +33,10 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 - Trên KDE Plasma (Wayland), bộ gõ tự gửi phím xoá cho ứng dụng thay vì nhờ máy chủ uinput, rồi chờ ứng
   dụng báo đã xoá xong mới gõ chữ mới. Ứng dụng X11 chạy qua XWayland không còn bị kẹt, nuốt hết phím
   sau một lần thay chữ. Ô soạn tin Facebook trên KDE xoá rồi gõ lại như ô thường, không bôi đen rồi gõ
-  đè nữa.
+  đè nữa (#33).
 - Trên GNOME, gõ nhanh trong Firefox không còn mất chữ ("viet" ra "v"), ô soạn tin Facebook trên Edge
   không còn ra "i" thay cho "đi", và chuyển từ app khác sang terminal không còn làm rơi chữ. Luật theo
-  app nhận cả tên GNOME báo kèm đuôi `.desktop` (như `firefox.desktop`).
+  app nhận cả tên GNOME báo kèm đuôi `.desktop` (như `firefox.desktop`) (#33).
 
 ### Tài liệu
 

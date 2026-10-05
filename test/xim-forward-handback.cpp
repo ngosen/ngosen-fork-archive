@@ -72,8 +72,16 @@ int main() {
     }
     if (!type(engine, entry, *context, FcitxKey_e, true))
         return 1;
-    if (context->forwarded().size() != 2) {
-        reportFailure("forward the backspace for e -> ê", "[BackSpace down][BackSpace up]", describeForwarded(*context));
+    // The client is still waiting for the reply to that key; nothing may reach it before the reply.
+    if (!context->forwarded().empty()) {
+        reportFailure("no backspace forwarded inside the key event", "(none)", describeForwarded(*context));
+        return 1;
+    }
+    pumpEventLoop(testInstance.instance, 1);
+    const auto& forwarded = context->forwarded();
+    if (forwarded.size() != 2 || forwarded[0].key().sym() != FcitxKey_BackSpace || forwarded[0].isRelease() || forwarded[1].key().sym() != FcitxKey_BackSpace ||
+        !forwarded[1].isRelease()) {
+        reportFailure("forward the backspace for e -> ê after the reply", "[BackSpace down][BackSpace up]", describeForwarded(*context));
         return 1;
     }
 

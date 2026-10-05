@@ -869,6 +869,13 @@ namespace fcitx {
         return true;
     }
 
+    void LotusState::forwardBackspaces(int count) {
+        for (int i = 0; i < count; ++i) {
+            ic_->forwardKey(Key(FcitxKey_BackSpace, KeyStates(), BackSpaceKeycode), false);
+            ic_->forwardKey(Key(FcitxKey_BackSpace, KeyStates(), BackSpaceKeycode), true);
+        }
+    }
+
     bool LotusState::canSendBackspaces() const {
         return forwardsBackspaces(ic_) || uinput_client_fd_ >= 0;
     }
@@ -1048,9 +1055,18 @@ namespace fcitx {
         if (forwardsBackspaces(ic_)) {
             // The uinput count includes a sentinel that comes back to us; forwarded keys never do.
             const int count = expected_backspaces_ - 1;
-            for (int i = 0; i < count; ++i) {
-                ic_->forwardKey(Key(FcitxKey_BackSpace, KeyStates(), BackSpaceKeycode), false);
-                ic_->forwardKey(Key(FcitxKey_BackSpace, KeyStates(), BackSpaceKeycode), true);
+            if (getFrontendName(ic_) == "xim") {
+                // We are inside the client's synchronous XIM request for the key that triggered this
+                // replacement. Keys forwarded now reach the client before its reply, and libX11 may
+                // hand them back to us unprocessed. Forward them once the reply has gone out.
+                xim_forward_timer_ = engine_->instance()->eventLoop().addTimeEvent(CLOCK_MONOTONIC, ::fcitx::now(CLOCK_MONOTONIC), 0, [this, count](EventSourceTime*, uint64_t) {
+                    if (is_deleting_.load()) {
+                        forwardBackspaces(count);
+                    }
+                    return false;
+                });
+            } else {
+                forwardBackspaces(count);
             }
             LOTUS_INFO("Forward " + std::to_string(count) + " backspaces");
             waitForDeletion(nullptr, 4);

@@ -157,7 +157,7 @@ bool surroundingTextLags(fcitx::InputContext* ic);
 
 // True when the frontend can deliver backspaces itself, so the uinput server is not needed: the
 // Wayland input-method frontend, XIM clients running under XWayland, and IBus and D-Bus clients
-// outside GNOME.
+// outside GNOME other than SDL.
 bool forwardsBackspaces(fcitx::InputContext* ic);
 
 // True for GTK4 clients, whose IM modules drop forwarded keys; delete through surrounding text there.

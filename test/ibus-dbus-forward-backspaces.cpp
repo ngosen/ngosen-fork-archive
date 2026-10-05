@@ -225,9 +225,30 @@ namespace {
         return true;
     }
 
+    // SDL handles only commits and preedit from the IM, so neither forwarded keys nor surrounding text
+    // deletes anything there.
+    bool sdlKeepsServer(Harness& h, ServerProbe& server, const std::string& program, const std::string& frontend, fcitx::CapabilityFlags caps) {
+        const int before  = server.requests();
+        auto      context = h.open(program, frontend, caps);
+        if (!h.typeTie(*context) || !h.type(*context, FcitxKey_e, true))
+            return false;
+        pumpEventLoop(h.testInstance.instance, 20);
+        const std::string where = frontend + " " + program + ": ";
+        if (!context->forwarded().empty() || !context->deletes().empty()) {
+            reportFailure(where + "no forwarded key or surrounding delete", "(none)", describeForwarded(*context) + ", " + std::to_string(context->deletes().size()) + " deletes");
+            return false;
+        }
+        if (server.requests() == before) {
+            reportFailure(where + "the replacement goes to the uinput server", ">= 1 request", "0");
+            return false;
+        }
+        return true;
+    }
+
     bool gnomeIbusKeepsServer(Harness& h, ServerProbe& server) {
         setenv("XDG_CURRENT_DESKTOP", "GNOME", 1);
-        auto context = h.open("gtk3-im:gnome", "ibus", fcitx::CapabilityFlags{});
+        const int before  = server.requests();
+        auto      context = h.open("gtk3-im:gnome", "ibus", fcitx::CapabilityFlags{});
         if (!h.typeTie(*context) || !h.type(*context, FcitxKey_e, true))
             return false;
         pumpEventLoop(h.testInstance.instance, 20);
@@ -235,7 +256,7 @@ namespace {
             reportFailure("GNOME ibus: no forwarded key", "(none)", describeForwarded(*context));
             return false;
         }
-        if (server.requests() == 0) {
+        if (server.requests() == before) {
             reportFailure("GNOME ibus: the replacement goes to the uinput server", ">= 1 request", "0");
             return false;
         }
@@ -276,6 +297,11 @@ int main() {
         reportFailure("no request reaches the uinput server outside GNOME", "0", std::to_string(requests));
         return 1;
     }
+    const auto sdlCaps = fcitx::CapabilityFlags{fcitx::CapabilityFlag::Preedit, fcitx::CapabilityFlag::FormattedPreedit};
+    if (!sdlKeepsServer(h, server, "Medieval2", "dbus", sdlCaps))
+        return 1;
+    if (!sdlKeepsServer(h, server, "SDL2_Application", "ibus", fcitx::CapabilityFlags{}))
+        return 1;
     if (!gnomeIbusKeepsServer(h, server))
         return 1;
     return 0;

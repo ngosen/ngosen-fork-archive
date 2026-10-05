@@ -178,9 +178,18 @@ bool forwardsBackspaces(fcitx::InputContext* ic) {
     if (frontend == "ibus") {
         // On GNOME the IBus client is GNOME Shell, not the app; keep the server path there.
         const char* desktop = std::getenv("XDG_CURRENT_DESKTOP");
-        return desktop == nullptr || std::string_view(desktop).find("GNOME") == std::string_view::npos;
+        if (desktop != nullptr && std::string_view(desktop).find("GNOME") != std::string_view::npos) {
+            return false;
+        }
+        // SDL takes only commits and preedit from the IM.
+        return !ic->program().starts_with("SDL");
     }
-    return frontend == "dbus";
+    if (frontend == "dbus") {
+        // fcitx5-gtk and fcitx5-qt set one of these; SDL sets neither and handles only commits and preedit.
+        const auto& caps = ic->capabilityFlags();
+        return caps.test(fcitx::CapabilityFlag::KeyEventOrderFix) || caps.test(fcitx::CapabilityFlag::SurroundingText);
+    }
+    return false;
 }
 
 bool ignoresForwardedKeys(fcitx::InputContext* ic) {
@@ -190,7 +199,8 @@ bool ignoresForwardedKeys(fcitx::InputContext* ic) {
         return ic->program().starts_with("gtk4-im:");
     }
     // fcitx5-gtk4 discards forwarded keys, and is the D-Bus client that leaves this flag unset.
-    return frontend == "dbus" && !ic->capabilityFlags().test(fcitx::CapabilityFlag::KeyEventOrderFix);
+    const auto& caps = ic->capabilityFlags();
+    return frontend == "dbus" && !caps.test(fcitx::CapabilityFlag::KeyEventOrderFix) && caps.test(fcitx::CapabilityFlag::SurroundingText);
 }
 
 std::string stripDesktopSuffix(const std::string& program) {

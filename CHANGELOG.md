@@ -39,7 +39,8 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
   app nhận cả tên GNOME báo kèm đuôi `.desktop` (như `firefox.desktop`) (#33).
 - Ngoài GNOME, app nối với bộ gõ qua IBus hoặc qua mô-đun fcitx5 (`GTK_IM_MODULE=ibus`/`fcitx`, ví
   dụ Zalo và các app Electron chạy X11) cũng gõ được mà không cần máy chủ uinput. App GTK4 xoá chữ
-  bằng surrounding text vì mô-đun GTK4 bỏ qua phím gửi hộ.
+  bằng surrounding text vì mô-đun GTK4 bỏ qua phím gửi hộ. Game dùng SDL vẫn đi máy chủ vì SDL chỉ nhận
+  chữ ghi và chữ gạch chân.
 
 ### Tài liệu
 

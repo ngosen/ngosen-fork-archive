@@ -172,7 +172,25 @@ bool forwardsBackspaces(fcitx::InputContext* ic) {
     }
     // Over XWayland the uinput keys can lose a press and leave the sentinel wait stuck forever.
     static const bool underWayland = std::getenv("WAYLAND_DISPLAY") != nullptr;
-    return frontend == "xim" && underWayland;
+    if (frontend == "xim") {
+        return underWayland;
+    }
+    if (frontend == "ibus") {
+        // On GNOME the IBus client is GNOME Shell, not the app; keep the server path there.
+        const char* desktop = std::getenv("XDG_CURRENT_DESKTOP");
+        return desktop == nullptr || std::string_view(desktop).find("GNOME") == std::string_view::npos;
+    }
+    return frontend == "dbus";
+}
+
+bool ignoresForwardedKeys(fcitx::InputContext* ic) {
+    const std::string frontend = getFrontendName(ic);
+    if (frontend == "ibus") {
+        // IBus for GTK4 feeds forwarded keys back into the IM instead of the widget.
+        return ic->program().starts_with("gtk4-im:");
+    }
+    // fcitx5-gtk4 discards forwarded keys, and is the D-Bus client that leaves this flag unset.
+    return frontend == "dbus" && !ic->capabilityFlags().test(fcitx::CapabilityFlag::KeyEventOrderFix);
 }
 
 std::string stripDesktopSuffix(const std::string& program) {

@@ -177,7 +177,7 @@ bool forwardsBackspaces(fcitx::InputContext* ic) {
     }
     if (frontend == "ibus") {
         // SDL takes only commits and preedit from the IM.
-        return !ic->program().starts_with("SDL");
+        return !isStartsWith(ic->program(), "SDL");
     }
     if (frontend == "dbus") {
         // fcitx5-gtk and fcitx5-qt set one of these; SDL sets neither and handles only commits and preedit.
@@ -191,7 +191,7 @@ bool ignoresForwardedKeys(fcitx::InputContext* ic) {
     const std::string frontend = getFrontendName(ic);
     if (frontend == "ibus") {
         // IBus for GTK4 feeds forwarded keys back into the IM instead of the widget.
-        return ic->program().starts_with("gtk4-im:");
+        return isStartsWith(ic->program(), "gtk4-im:");
     }
     // fcitx5-gtk4 discards forwarded keys, and is the D-Bus client that leaves this flag unset.
     const auto& caps = ic->capabilityFlags();

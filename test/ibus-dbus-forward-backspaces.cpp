@@ -95,6 +95,7 @@ namespace {
     // this much before its deadline. Only lower bounds on time are checked.
     constexpr uint64_t ClockSlackUs = 3000;
     constexpr uint64_t WaitUs       = 15000;
+    constexpr uint64_t CaretQuietUs = 30000;
 
     struct Harness {
         TestInstance&                     testInstance;
@@ -247,6 +248,41 @@ namespace {
         return true;
     }
 
+    // Chromium on X11 reports no surrounding text and can take longer than the fixed wait to apply
+    // forwarded keys, but each key it applies moves its caret.
+    bool commitWaitsForCaretToSettle(Harness& h) {
+        const auto caps    = fcitx::CapabilityFlags{fcitx::CapabilityFlag::Preedit, fcitx::CapabilityFlag::FormattedPreedit, fcitx::CapabilityFlag::KeyEventOrderFix};
+        auto       context = h.open("microsoft-edge", "dbus", caps);
+        context->setCursorRect(fcitx::Rect{100, 10, 101, 30});
+        if (!h.typeTie(*context))
+            return false;
+        pumpEventLoop(h.testInstance.instance, 1);
+        const uint64_t replacedAt = nowUs();
+        if (!h.type(*context, FcitxKey_e, true))
+            return false;
+        if (!forwardedOneBackspace(*context)) {
+            reportFailure("caret: forward the backspace for e -> ê", "[BackSpace down][BackSpace up]", describeForwarded(*context));
+            return false;
+        }
+        h.pumpUntil([] { return false; }, replacedAt + 25000);
+        if (!context->commits().empty()) {
+            reportFailure("caret: no commit before the app applies the backspace", "(none)", joinCommits(*context));
+            return false;
+        }
+        context->setCursorRect(fcitx::Rect{92, 10, 93, 30});
+        const uint64_t movedAt     = nowUs();
+        const uint64_t committedAt = h.pumpUntil([&] { return !context->commits().empty(); }, replacedAt + 1000000);
+        if (context->commits() != std::vector<std::string>{"ê"}) {
+            reportFailure("caret: commit e -> ê", "['ê']", joinCommits(*context));
+            return false;
+        }
+        if (committedAt - movedAt + ClockSlackUs < CaretQuietUs) {
+            reportFailure("caret: commit once the caret has stayed still for 30 ms", ">= 30000 us", std::to_string(committedAt - movedAt) + " us");
+            return false;
+        }
+        return true;
+    }
+
     // SDL handles only commits and preedit from the IM, so neither forwarded keys nor surrounding text
     // deletes anything there.
     bool sdlKeepsServer(Harness& h, ServerProbe& server, const std::string& program, const std::string& frontend, fcitx::CapabilityFlags caps) {
@@ -319,6 +355,8 @@ int main() {
     if (!forwardWithoutSurroundingWaits(h, "chrome", "fcitx4", fcitx::CapabilityFlags{fcitx::CapabilityFlag::Preedit, fcitx::CapabilityFlag::FormattedPreedit}))
         return 1;
     if (!fcitx4ForwardsWithSurroundingText(h))
+        return 1;
+    if (!commitWaitsForCaretToSettle(h))
         return 1;
     if (const int requests = server.requests(); requests != 0) {
         reportFailure("no request reaches the uinput server", "0", std::to_string(requests));

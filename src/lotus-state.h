@@ -138,6 +138,7 @@ namespace fcitx {
 
         // --- Uinput mode: wait for the app instead of sleeping (see handleUInputKeyPress) ---
         std::unique_ptr<HandlerTableEntry<EventHandler>> surr_wait_watcher_;
+        std::unique_ptr<HandlerTableEntry<EventHandler>> caret_watcher_; ///< extends the timed commit while the caret moves
         std::unique_ptr<EventSourceTime>                 surr_wait_timer_;
         std::unique_ptr<EventSourceTime>                 xim_forward_timer_; ///< forwards after the XIM sync reply
         uint64_t                                         surr_wait_started_at_    = 0;
@@ -237,6 +238,8 @@ namespace fcitx {
         bool canSendBackspaces() const;
         // Moves the commit of a timer-only wait later, never earlier.
         void deferTimedCommit(uint64_t deliverAtUs);
+        // Holds the timed commit until the caret has stopped moving.
+        void waitForCaretToSettle();
 
         /**
          * @brief Performs text replacement via uinput.

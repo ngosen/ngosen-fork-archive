@@ -21,6 +21,8 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 
 - Mục Issues của kho được bật để nhận báo lỗi. Mẫu báo lỗi hỏi phiên bản và cách cài của Ngó Sen thay
   cho các cách cài của bản gốc; README chỉ tới mục Issues (#30).
+- Trên phiên X11 thật (Xfce, Cinnamon, MATE…), app nối với bộ gõ qua XIM cũng xoá chữ bằng phím gửi hộ,
+  không cần máy chủ uinput; trước đây chỉ làm vậy dưới XWayland.
 
 ### Bỏ
 

@@ -167,13 +167,8 @@ bool surroundingTextLags(fcitx::InputContext* ic) {
 
 bool forwardsBackspaces(fcitx::InputContext* ic) {
     const std::string frontend = getFrontendName(ic);
-    if (frontend == "wayland") {
+    if (frontend == "wayland" || frontend == "xim") {
         return true;
-    }
-    // Over XWayland the uinput keys can lose a press and leave the sentinel wait stuck forever.
-    static const bool underWayland = std::getenv("WAYLAND_DISPLAY") != nullptr;
-    if (frontend == "xim") {
-        return underWayland;
     }
     if (frontend == "ibus") {
         // SDL takes only commits and preedit from the IM.

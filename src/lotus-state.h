@@ -238,7 +238,7 @@ namespace fcitx {
         bool canSendBackspaces() const;
         // Moves the commit of a timer-only wait later, never earlier.
         void deferTimedCommit(uint64_t deliverAtUs);
-        // Holds the timed commit until the caret has stopped moving.
+        // Holds the timed commit until the caret has moved left and stopped.
         void waitForCaretToSettle();
 
         /**

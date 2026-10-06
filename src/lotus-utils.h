@@ -162,10 +162,6 @@ bool forwardsBackspaces(fcitx::InputContext* ic);
 // True for GTK4 clients, whose IM modules drop forwarded keys; delete through surrounding text there.
 bool ignoresForwardedKeys(fcitx::InputContext* ic);
 
-// True for D-Bus and fcitx4 clients that report their caret but not the surrounding text, such as
-// Chromium on X11.
-bool reportsCaretOnly(fcitx::InputContext* ic);
-
 /**
  * @brief Key event entry for replay buffer.
  */

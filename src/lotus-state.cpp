@@ -34,13 +34,6 @@ namespace fcitx {
     // XIM, IBus and D-Bus clients queue forwarded keys, and XIM may hand one back; without a
     // surrounding text report the commit waits this long for them.
     constexpr uint64_t ForwardWaitUs = 15000;
-    // A client that reports only its caret may apply forwarded keys more slowly than ForwardWaitUs
-    // (the Chromium omnibox opens its popup on the first key of a field). The commit waits for the
-    // caret to move left and then stay still; a client whose caret never moves commits after the
-    // first-move limit, and one whose caret keeps moving after the cap.
-    constexpr uint64_t CaretQuietUs     = 30000;
-    constexpr uint64_t CaretFirstMoveUs = 120000;
-    constexpr uint64_t CaretSettleCapUs = 300000;
 
     static inline bool isWordBreak(uint32_t ucs4) {
         // Space, tab, newline, carriage return, null, or punctuation/symbols (: ; < = > ? @)
@@ -895,28 +888,6 @@ namespace fcitx {
         }
     }
 
-    void LotusState::waitForCaretToSettle() {
-        deferTimedCommit(surr_wait_started_at_ + CaretFirstMoveUs);
-        caret_watcher_.reset(); // safe: we are outside its dispatch
-        caret_watcher_ = engine_->instance()->watchEvent(EventType::InputContextCursorRectChanged, EventWatcherPhase::Default, [this, before = ic_->cursorRect()](Event& e) {
-            auto& ice = static_cast<InputContextEvent&>(e);
-            if (ice.inputContext() != ic_ || !surr_wait_pending_ || !surr_wait_timer_only_ || !is_deleting_.load() || !surr_wait_timer_) {
-                return;
-            }
-            // Deleting moves the caret left, or up at a line start; a late report for an earlier key
-            // moves it right.
-            const auto& rect = ic_->cursorRect();
-            if (rect.left() >= before.left() && rect.top() >= before.top()) {
-                return;
-            }
-            // Unlike deferTimedCommit, this may move the commit earlier than the first-move limit.
-            const uint64_t earliest = surr_wait_started_at_ + ForwardWaitUs;
-            surr_wait_deliver_at_   = std::max(earliest, std::min(::fcitx::now(CLOCK_MONOTONIC) + CaretQuietUs, surr_wait_started_at_ + CaretSettleCapUs));
-            surr_wait_timer_->setTime(surr_wait_deliver_at_);
-            surr_wait_timer_->setOneShot();
-        });
-    }
-
     void LotusState::send_select_uinput(int charCount) const {
         send_backspace_uinput(-charCount);
     }
@@ -1102,11 +1073,7 @@ namespace fcitx {
             waitForDeletion(nullptr, 4);
             // XIM, IBus and D-Bus clients queue forwarded keys, and the commit can overtake them.
             if (getFrontendName(ic_) != "wayland" && surr_wait_timer_only_ && surr_wait_timer_) {
-                if (reportsCaretOnly(ic_)) {
-                    waitForCaretToSettle();
-                } else {
-                    deferTimedCommit(surr_wait_started_at_ + ForwardWaitUs);
-                }
+                deferTimedCommit(surr_wait_started_at_ + ForwardWaitUs);
             }
             return;
         }

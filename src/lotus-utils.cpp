@@ -179,6 +179,12 @@ bool forwardsBackspaces(fcitx::InputContext* ic) {
         const auto& caps = ic->capabilityFlags();
         return caps.test(fcitx::CapabilityFlag::KeyEventOrderFix) || caps.test(fcitx::CapabilityFlag::SurroundingText);
     }
+    if (frontend == "fcitx4") {
+        // Snap apps bundle the fcitx4 GTK module, which sets one of these; SDL 2.0.12 and older speak
+        // this protocol too and set at most Preedit.
+        const auto& caps = ic->capabilityFlags();
+        return caps.test(fcitx::CapabilityFlag::FormattedPreedit) || caps.test(fcitx::CapabilityFlag::SurroundingText);
+    }
     return false;
 }
 

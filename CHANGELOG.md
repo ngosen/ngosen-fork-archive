@@ -23,6 +23,9 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
   cho các cách cài của bản gốc; README chỉ tới mục Issues (#30).
 - Trên phiên X11 thật (Xfce, Cinnamon, MATE…), app nối với bộ gõ qua XIM cũng xoá chữ bằng phím gửi hộ,
   không cần máy chủ uinput; trước đây chỉ làm vậy dưới XWayland.
+- App cài bằng snap (Firefox, Chromium…) nối với bộ gõ qua mô-đun fcitx đời cũ có sẵn trong gói snap;
+  giờ chúng cũng xoá chữ bằng phím gửi hộ, không cần máy chủ uinput. Game dùng SDL 2.0.12 trở về trước
+  nói cùng giao thức đó vẫn đi máy chủ.
 
 ### Bỏ
 

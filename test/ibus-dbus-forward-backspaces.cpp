@@ -201,8 +201,8 @@ namespace {
     // Firefox over IBus and Chromium over the fcitx4 GTK module report no surrounding text; their
     // forwarded keys queue behind the commit unless the commit waits.
     bool forwardWithoutSurroundingWaits(Harness& h, const std::string& program, const std::string& frontend, fcitx::CapabilityFlags caps) {
-        auto context = h.open(program, frontend, caps);
-        const std::string where = frontend + " " + program + ": ";
+        auto              context = h.open(program, frontend, caps);
+        const std::string where   = frontend + " " + program + ": ";
         if (!h.typeTie(*context))
             return false;
         // libuv dates a new timer from the loop's last run, and a real key arrives inside one.

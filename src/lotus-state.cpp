@@ -11,12 +11,12 @@
 #include "lotus-utils.h"
 #include "ngosen-app-quirks.h"
 #include "ngosen-fcitx-host.h"
+#include "ngosen-utf8.h"
 #include "ngosen-xtest.h"
 #include "lotus.h"
 
 #include <cstddef>
 #include <fcitx-utils/log.h>
-#include <fcitx-utils/utf8.h>
 #include <fcitx/inputpanel.h>
 #include <fcitx/menu.h>
 #include <fcitx/userinterface.h>
@@ -135,7 +135,7 @@ namespace fcitx {
             const unsigned cursor = s.cursor();
             unsigned       i      = 0;
             size_t         after  = 0;
-            for (uint32_t c : fcitx::utf8::MakeUTF8CharRange(s.text())) {
+            for (char32_t c : ngosen::utf8::decode(s.text())) {
                 if (c == U'\n') {
                     return false;
                 }
@@ -155,7 +155,7 @@ namespace fcitx {
         // The word being typed starts the field, so an extra backspace for a wrong autofill guess
         // deletes nothing. realtextLen is stale here after the address bar is cleared.
         bool onlyCurrentWordBeforeCursor(const ngosen::Surrounding& s, const std::string& buff) {
-            if (!s.isValid() || buff.empty() || s.cursor() != utf8::length(buff)) {
+            if (!s.isValid() || buff.empty() || s.cursor() != ngosen::utf8::length(buff)) {
                 return false;
             }
             const std::string& t = s.text();
@@ -168,14 +168,12 @@ namespace fcitx {
             return false;
         }
 
-        auto               textRange         = fcitx::utf8::MakeUTF8CharRange(s.text());
-        auto               oldPreBufferRange = fcitx::utf8::MakeUTF8CharRange(oldPreBuffer_);
-        std::u32string     u32Text(textRange.begin(), textRange.end());
-        std::u32string     u32OldPreBuffer(oldPreBufferRange.begin(), oldPreBufferRange.end());
+        const std::u32string u32Text         = ngosen::utf8::decode(s.text());
+        const std::u32string u32OldPreBuffer = ngosen::utf8::decode(oldPreBuffer_);
 
-        const unsigned int cursor  = s.cursor();
-        const unsigned int anchor  = s.anchor();
-        const size_t       textLen = u32Text.length();
+        const unsigned int   cursor  = s.cursor();
+        const unsigned int   anchor  = s.anchor();
+        const size_t         textLen = u32Text.length();
 
         // Fix that surrounding text is delay update
         const size_t buffLen    = u32OldPreBuffer.length();
@@ -232,7 +230,7 @@ namespace fcitx {
         UniqueCPtr<char> preedit(EnginePullPreedit(lotusEngine_.handle()));
         if (preedit && (*preedit.get() != 0)) {
             std::string_view view = preedit.get();
-            host_->showPreedit(utf8::validate(view) ? std::string(view) : std::string(), false);
+            host_->showPreedit(ngosen::utf8::validate(view) ? std::string(view) : std::string(), false);
         }
         host_->refreshPreedit();
         host_->refreshPanel();
@@ -471,7 +469,7 @@ namespace fcitx {
         }
         auto it = t.begin();
         for (unsigned int i = 0; i < s.cursor() && it != t.end(); ++i) {
-            it = utf8::nextChar(it);
+            it = ngosen::utf8::nextChar(it, t.end());
         }
         const std::string before(t.begin(), it);
         auto              endsWith = [](const std::string& a, const std::string& b) { return a.size() >= b.size() && a.compare(a.size() - b.size(), b.size(), b) == 0; };
@@ -481,10 +479,10 @@ namespace fcitx {
         // Messenger moves the cursor before it removes the text, so a snapshot can look done while
         // deleted chars still follow the cursor. Treat that as in progress (#267).
         if (!surr_wait_deleted_.empty() && it != t.end()) {
-            const std::string charAfter(it, utf8::nextChar(it));
+            const std::string charAfter(it, ngosen::utf8::nextChar(it, t.end()));
             std::string       passed = surr_wait_prefix_;
             for (auto d = surr_wait_deleted_.begin(); d != surr_wait_deleted_.end();) {
-                const auto next = utf8::nextChar(d);
+                const auto next = ngosen::utf8::nextChar(d, surr_wait_deleted_.end());
                 if (charAfter == std::string(d, next) && endsWith(before, passed)) {
                     return false;
                 }
@@ -522,7 +520,7 @@ namespace fcitx {
             }
             auto it = t.begin();
             for (unsigned int i = 0; i < s.cursor() && it != t.end(); ++i) {
-                it = utf8::nextChar(it);
+                it = ngosen::utf8::nextChar(it, t.end());
             }
             return std::string(it, t.end()) == "\n\n";
         }
@@ -542,7 +540,7 @@ namespace fcitx {
             const std::string& t   = s.text();
             auto               end = t.begin();
             for (unsigned int i = 0; i < s.cursor() && end != t.end(); ++i) {
-                end = utf8::nextChar(end);
+                end = ngosen::utf8::nextChar(end, t.end());
             }
             return std::find_if(t.begin(), end, [](char c) { return c == ' ' || c == '\n'; }) == end;
         }
@@ -878,7 +876,7 @@ namespace fcitx {
     }
 
     void LotusState::noteCommit(const std::string& text) {
-        unreportedCommitLength_ += utf8::length(text);
+        unreportedCommitLength_ += ngosen::utf8::length(text);
     }
 
     void LotusState::sendSelectKeys(int charCount) const {
@@ -966,7 +964,7 @@ namespace fcitx {
         LOTUS_INFO("Perform replacement: " + deletedPart + " -> " + addedPart); //NOLINT
         current_backspace_count_ = 0;
         pending_commit_string_   = addedPart;
-        expected_backspaces_     = static_cast<int>(utf8::length(deletedPart));
+        expected_backspaces_     = static_cast<int>(ngosen::utf8::length(deletedPart));
         surr_wait_deleted_       = deletedPart;
         {
             const auto snapshot      = host_->surrounding();
@@ -982,7 +980,7 @@ namespace fcitx {
                 const std::string& t  = snapshot.text();
                 auto               it = t.begin();
                 for (unsigned int i = 0; i < snapshot.cursor() && it != t.end(); ++i) {
-                    it = utf8::nextChar(it);
+                    it = ngosen::utf8::nextChar(it, t.end());
                 }
                 const std::string before(t.begin(), it);
                 const std::string expected     = surr_wait_prefix_ + surr_wait_deleted_;
@@ -996,11 +994,11 @@ namespace fcitx {
         // A BackSpace in the Chromium address bar would only remove the selected autocompletion. XTEST,
         // unlike forwardKey, keeps Shift, so widen the selection over the old text and type over both.
         if (xtestAvailable() && ngosen::selectsOverAutocompletion(host_->field()) && !deletedPart.empty()) {
-            selectAndOvertype(addedPart, static_cast<int>(utf8::length(deletedPart)), true);
+            selectAndOvertype(addedPart, static_cast<int>(ngosen::utf8::length(deletedPart)), true);
             return;
         }
         if (engine_->options().messengerSelectOvertype && !ngosen::forwardsBackspaces(host_->field()) && looksLikeFacebookComposer(surrounding)) {
-            selectAndOvertype(addedPart, static_cast<int>(utf8::length(deletedPart)));
+            selectAndOvertype(addedPart, static_cast<int>(ngosen::utf8::length(deletedPart)));
             return;
         }
         // LibreOffice runs Backspace as an async shortcut, so committed text overtakes it. Its
@@ -1009,7 +1007,7 @@ namespace fcitx {
         const bool mustUseSurrText = isLibreOffice || ngosen::ignoresForwardedKeys(host_->field());
         bool       isSurrText = mustUseSurrText ? host_->field().surroundingText :
                                                   engine_->options().useSurroundingTextIfPossible && host_->field().surroundingText && surrounding.isValid() && !surrText.empty() &&
-                surrounding.cursor() == utf8::length(surrText);
+                surrounding.cursor() == ngosen::utf8::length(surrText);
         if (!isSurrText) {
             ++expected_backspaces_;
             // Sen skips the autofill guard except in address bars (#190): the Url flag on Chromium,
@@ -1035,7 +1033,7 @@ namespace fcitx {
             if (!pending_commit_string_.empty()) {
                 host_->commitText(pending_commit_string_);
                 LOTUS_INFO("Commit: " + pending_commit_string_);
-                std::this_thread::sleep_for(std::chrono::milliseconds(engine_->options().surrCommitSleepMs * utf8::length(addedPart)));
+                std::this_thread::sleep_for(std::chrono::milliseconds(engine_->options().surrCommitSleepMs * ngosen::utf8::length(addedPart)));
             }
             expected_backspaces_     = 0;
             current_backspace_count_ = 0;
@@ -1318,7 +1316,7 @@ namespace fcitx {
                 } else if (host_->field().surroundingText) {
                     const auto surrounding = host_->surrounding();
                     if (surrounding.isValid()) {
-                        size_t oldLen = utf8::length(oldPreBuffer_);
+                        size_t oldLen = ngosen::utf8::length(oldPreBuffer_);
                         if (oldLen > 0) {
                             host_->deleteSurrounding(-static_cast<int>(oldLen), static_cast<int>(oldLen));
                         }
@@ -1557,7 +1555,7 @@ namespace fcitx {
     void LotusState::reset(bool isFocusOut) {
         const auto  surrounding = host_->surrounding();
         const auto& text        = surrounding.text();
-        size_t      textLen     = utf8::length(text);
+        size_t      textLen     = ngosen::utf8::length(text);
         realtextLen.store(textLen, std::memory_order_release);
         if (is_deleting_.load(std::memory_order_acquire)) {
             return;

@@ -10,6 +10,7 @@
 #include "lotus-engine.h"
 #include "lotus-utils.h"
 #include "ngosen-app-quirks.h"
+#include "ngosen-clock.h"
 #include "ngosen-fcitx-host.h"
 #include "ngosen-utf8.h"
 #include "ngosen-xtest.h"
@@ -461,7 +462,7 @@ namespace fcitx {
         if (!surr_wait_sent_snapshot_.empty() && t + "\x1f" + std::to_string(s.cursor()) == surr_wait_sent_snapshot_) {
             // Firefox may never send another state, so accept it after WaitSurroundingMinPerKeyMs per
             // backspace, as long as a plain sleep. The immediate check still rejects it.
-            const auto waited  = (::fcitx::now(CLOCK_MONOTONIC) - surr_wait_started_at_) / 1000;
+            const auto waited  = (ngosen::monotonicUs() - surr_wait_started_at_) / 1000;
             const auto minimum = static_cast<uint64_t>(engine_->options().waitSurroundingMinPerKeyMs) * static_cast<uint64_t>(std::max(expected_backspaces_, 1));
             if (waited < minimum) {
                 return false;
@@ -563,7 +564,7 @@ namespace fcitx {
         surr_wait_timer_only_    = true;
         surr_wait_focus_retries_ = 0;
         settle_reason_           = reason;
-        surr_wait_deliver_at_    = ::fcitx::now(CLOCK_MONOTONIC) + (static_cast<uint64_t>(settleMs) * 1000ULL);
+        surr_wait_deliver_at_    = ngosen::monotonicUs() + (static_cast<uint64_t>(settleMs) * 1000ULL);
         settle_timer_            = host_->startTimer(surr_wait_deliver_at_, 1000, [this](ngosen::Timer&) {
             if (!surr_wait_pending_ || !surr_wait_timer_only_ || !is_deleting_.load()) {
                 return false;
@@ -574,7 +575,7 @@ namespace fcitx {
     }
 
     void LotusState::finishReplacement(const char* reason, bool fromTimer) {
-        const auto elapsedMs = (::fcitx::now(CLOCK_MONOTONIC) - surr_wait_started_at_) / 1000;
+        const auto elapsedMs = (ngosen::monotonicUs() - surr_wait_started_at_) / 1000;
         LOTUS_INFO("Surr wait " + std::string(reason) + " after " + std::to_string(elapsedMs) + " ms");
         if (std::string(reason) == "timeout") {
             surr_snapshot_trusted_ = false;
@@ -611,7 +612,7 @@ namespace fcitx {
         if (defer) {
             deferred_commit_text_    = pending_commit_string_;
             deferred_commit_pending_ = true;
-            deferred_commit_timer_   = host_->startTimer(::fcitx::now(CLOCK_MONOTONIC), 0, [this](ngosen::Timer&) {
+            deferred_commit_timer_   = host_->startTimer(ngosen::monotonicUs(), 0, [this](ngosen::Timer&) {
                 flushDeferredCommit();
                 return false; // never reset a timer from inside its own callback
             });
@@ -677,7 +678,7 @@ namespace fcitx {
             if (event != nullptr) {
                 event->filterAndAccept();
             }
-            surr_wait_started_at_ = ::fcitx::now(CLOCK_MONOTONIC);
+            surr_wait_started_at_ = ngosen::monotonicUs();
             // After a timeout the app is lagging (Firefox) and its snapshot is stale: skip the
             // immediate check.
             if (surr_snapshot_trusted_ && deletionLooksDone()) {
@@ -701,7 +702,7 @@ namespace fcitx {
                 if (!surr_wait_pending_ || surr_wait_timer_only_ || !is_deleting_.load()) {
                     return false;
                 }
-                const auto waited = ::fcitx::now(CLOCK_MONOTONIC) - surr_wait_started_at_;
+                const auto waited = ngosen::monotonicUs() - surr_wait_started_at_;
                 if (waited + 1000 < timeout) {
                     if (deletionLooksDone()) {
                         deliverAfterSettle("threshold", true);
@@ -745,7 +746,7 @@ namespace fcitx {
         surr_wait_pending_       = true;
         surr_wait_timer_only_    = true;
         surr_wait_focus_retries_ = 0;
-        surr_wait_started_at_    = ::fcitx::now(CLOCK_MONOTONIC);
+        surr_wait_started_at_    = ngosen::monotonicUs();
         surr_wait_deliver_at_    = surr_wait_started_at_ + (static_cast<uint64_t>(waitMs) * 1000ULL);
         surr_wait_timer_         = host_->startTimer(surr_wait_deliver_at_, 1000, [this](ngosen::Timer& t) {
             if (!surr_wait_pending_ || !surr_wait_timer_only_) {
@@ -760,7 +761,7 @@ namespace fcitx {
                 // Chromium X11 leaves and re-enters the field within ~0.3 ms; a commit in that gap is
                 // lost. Give it a moment to come back.
                 if (++surr_wait_focus_retries_ <= 5) {
-                    t.rearm(::fcitx::now(CLOCK_MONOTONIC) + 2000);
+                    t.rearm(ngosen::monotonicUs() + 2000);
                     return true;
                 }
                 // The user really switched windows: the old field can no longer take the text. Reset
@@ -815,7 +816,7 @@ namespace fcitx {
         }
         // After a timeout, an early event is the app's stale buffer catching up, not the
         // finished deletion. Ignore events before WaitSurroundingMinPerKeyMs per backspace.
-        const auto waitedUs  = ::fcitx::now(CLOCK_MONOTONIC) - surr_wait_started_at_;
+        const auto waitedUs  = ngosen::monotonicUs() - surr_wait_started_at_;
         const auto minimumUs = static_cast<uint64_t>(engine_->options().waitSurroundingMinPerKeyMs) * static_cast<uint64_t>(std::max(expected_backspaces_, 1)) * 1000ULL;
         {
             const auto current = host_->surrounding();
@@ -897,7 +898,7 @@ namespace fcitx {
             overtype_had_snapshot_  = snapshot.isValid();
             overtype_cursor_before_ = overtype_had_snapshot_ ? snapshot.cursor() : 0;
         }
-        overtype_started_at_     = ::fcitx::now(CLOCK_MONOTONIC);
+        overtype_started_at_     = ngosen::monotonicUs();
         overtype_watching_       = true;
         const uint64_t timeoutUs = viaXTest ? XTestSelectTimeoutUs : 150000ULL;
         overtype_timer_          = host_->startTimer(overtype_started_at_ + timeoutUs, 1000, [this](ngosen::Timer&) {
@@ -929,8 +930,7 @@ namespace fcitx {
             host_->forwardKey(ngosen::EditKey::Right, false);
             host_->forwardKey(ngosen::EditKey::Right, true);
         }
-        LOTUS_INFO("Overtype gave up after " + std::to_string((::fcitx::now(CLOCK_MONOTONIC) - overtype_started_at_) / 1000) + " ms, moved cursor right " +
-                   std::to_string(rightPresses));
+        LOTUS_INFO("Overtype gave up after " + std::to_string((ngosen::monotonicUs() - overtype_started_at_) / 1000) + " ms, moved cursor right " + std::to_string(rightPresses));
         overtype_pending_   = false;
         overtype_via_xtest_ = false;
         pending_commit_string_.clear();
@@ -945,7 +945,7 @@ namespace fcitx {
     }
 
     void LotusState::finishOvertype(const char* reason, bool fromTimer) {
-        const auto elapsedMs = (::fcitx::now(CLOCK_MONOTONIC) - overtype_started_at_) / 1000;
+        const auto elapsedMs = (ngosen::monotonicUs() - overtype_started_at_) / 1000;
         LOTUS_INFO("Overtype " + std::string(reason) + " after " + std::to_string(elapsedMs) + " ms");
         overtype_pending_   = false;
         overtype_via_xtest_ = false;
@@ -1049,7 +1049,7 @@ namespace fcitx {
                 // We are inside the client's synchronous XIM request for the key that triggered this
                 // replacement. Keys forwarded now reach the client before its reply, and libX11 may
                 // hand them back to us unprocessed. Forward them once the reply has gone out.
-                xim_forward_timer_ = host_->startTimer(::fcitx::now(CLOCK_MONOTONIC), 0, [this, count](ngosen::Timer&) {
+                xim_forward_timer_ = host_->startTimer(ngosen::monotonicUs(), 0, [this, count](ngosen::Timer&) {
                     if (is_deleting_.load()) {
                         forwardBackspaces(count);
                     }
@@ -1367,7 +1367,7 @@ namespace fcitx {
             keyEvent.forward();
             if (keyEvent.isRelease() && !overtype_shift_released_ && overtype_timer_) {
                 overtype_shift_released_ = true;
-                overtype_timer_->rearm(::fcitx::now(CLOCK_MONOTONIC) + XTestSelectSettleUs);
+                overtype_timer_->rearm(ngosen::monotonicUs() + XTestSelectSettleUs);
             }
             return;
         }
@@ -1464,13 +1464,13 @@ namespace fcitx {
             // The XIM client handed a forwarded backspace back unprocessed. Let it through so the
             // client applies it, and commit after it.
             LOTUS_INFO("XIM handed back a forwarded backspace");
-            deferTimedCommit(::fcitx::now(CLOCK_MONOTONIC) + ForwardWaitUs);
+            deferTimedCommit(ngosen::monotonicUs() + ForwardWaitUs);
             return;
         }
         if (is_deleting_.load(std::memory_order_acquire) && surr_wait_timer_only_) {
             // A key arrived during a timer-only wait. Replaying it via commitString loses text on
             // Chromium X11, so finish the wait, commit, then handle the key normally.
-            const uint64_t nowUs = ::fcitx::now(CLOCK_MONOTONIC);
+            const uint64_t nowUs = ngosen::monotonicUs();
             if (surr_wait_deliver_at_ > nowUs) {
                 std::this_thread::sleep_for(std::chrono::microseconds(surr_wait_deliver_at_ - nowUs));
             }

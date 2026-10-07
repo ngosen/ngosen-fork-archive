@@ -2,6 +2,8 @@
 //
 // The typing logic's UTF-8 helpers must answer exactly as the fcitx5 ones they replace, broken
 // input included, so compare them on every short byte string and on random longer ones.
+// fcitx5 before 5.1.12 also rejected noncharacters such as U+FFFF; the helpers follow later fcitx5,
+// so strings holding one are compared only where both versions agree.
 #include "ngosen-utf8.h"
 
 #include <fcitx-utils/utf8.h>
@@ -50,11 +52,34 @@ namespace {
         } catch (const std::runtime_error&) { return false; }
     }
 
+    bool isNoncharacter(char32_t c) {
+        return (c >= 0xfdd0 && c <= 0xfdef) || (c & 0xfffe) == 0xfffe;
+    }
+
+    // Decodes here rather than with the helpers under test, so a bug in them cannot hide a string.
+    bool hasNoncharacter(const std::string& s) {
+        auto at   = [&](size_t i) { return static_cast<unsigned char>(s[i]); };
+        auto cont = [&](size_t i) { return i < s.size() && (at(i) & 0xc0) == 0x80; };
+        for (size_t i = 0; i < s.size(); ++i) {
+            if ((at(i) & 0xf0) == 0xe0 && cont(i + 1) && cont(i + 2)) {
+                if (isNoncharacter(((at(i) & 0x0fU) << 12) | ((at(i + 1) & 0x3fU) << 6) | (at(i + 2) & 0x3fU))) {
+                    return true;
+                }
+            } else if ((at(i) & 0xf8) == 0xf0 && cont(i + 1) && cont(i + 2) && cont(i + 3)) {
+                if (isNoncharacter(((at(i) & 0x07U) << 18) | ((at(i + 1) & 0x3fU) << 12) | ((at(i + 2) & 0x3fU) << 6) | (at(i + 3) & 0x3fU))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     void compare(const std::string& s) {
         if (ngosen::utf8::length(s) != fcitx::utf8::length(s)) {
             fail("length", s);
         }
-        if (ngosen::utf8::validate(s) != fcitx::utf8::validate(s)) {
+        const bool versionsDiffer = hasNoncharacter(s);
+        if (!versionsDiffer && ngosen::utf8::validate(s) != fcitx::utf8::validate(s)) {
             fail("validate", s);
         }
         for (auto it = s.begin(); it != s.end(); ++it) {
@@ -65,7 +90,7 @@ namespace {
         std::u32string theirs;
         std::u32string ours;
         const bool     theyDecode = fcitxDecode(s, theirs);
-        if (ownDecode(s, ours) != theyDecode || (theyDecode && ours != theirs)) {
+        if (!versionsDiffer && (ownDecode(s, ours) != theyDecode || (theyDecode && ours != theirs))) {
             fail("decode", s);
         }
     }
@@ -111,6 +136,10 @@ int main() {
     for (const std::string& text : {std::string("Tiếng Việt"), std::string("người\nđi"), std::string("😀 ok"), std::string("a\0b", 3), std::string("đ\xff")}) {
         compare(text);
         ++compared;
+    }
+
+    if (!ngosen::utf8::validate("\xef\xbf\xbf") || ngosen::utf8::decode("\xf4\x8f\xbf\xbf") != U"\U0010ffff") {
+        fail("noncharacters are accepted", "\xef\xbf\xbf");
     }
 
     std::cerr << compared << " strings compared, " << failures << " differences\n";

@@ -1259,163 +1259,9 @@ namespace fcitx {
         }
     }
 
-    void LotusState::handleSurroundingText(KeyEvent& keyEvent, KeySym currentSym) {
-        if (checkForwardSpecialKey(keyEvent, currentSym)) {
-            keyEvent.forward();
-            return;
-        }
-        auto* ic = keyEvent.inputContext();
-        if ((ic == nullptr) || !ic->capabilityFlags().test(CapabilityFlag::SurroundingText)) {
-            LOTUS_WARN("Surrounding text not supported");
-            keyEvent.forward();
-            return;
-        }
-
-        const auto& surrounding = ic->surroundingText();
-        if (!surrounding.isValid()) {
-            LOTUS_WARN("Surrounding text is invalid");
-            keyEvent.forward();
-            return;
-        }
-
-        if (isBackspace(keyEvent.rawKey().sym())) {
-            ResetEngine(lotusEngine_.handle());
-            keyEvent.forward();
-            return;
-        }
-
-        const std::string& text   = surrounding.text();
-        unsigned int       cursor = std::min(surrounding.anchor(), surrounding.cursor());
-
-        size_t             textLen = utf8::lengthValidated(text);
-
-        if (textLen == utf8::INVALID_LENGTH || cursor <= 0 || cursor > textLen) {
-            processNormalKey(keyEvent, currentSym);
-            return;
-        }
-
-        {
-            auto startIter = utf8::nextNChar(text.begin(), cursor);
-            auto endIter   = startIter;
-
-            int  scanCount = 0;
-            while (startIter != text.begin() && scanCount < MAX_SCAN_LENGTH) {
-                auto prev = startIter;
-                if (prev != text.begin()) {
-                    --prev;
-                    while (prev != text.begin() && ((*prev & 0xC0) == 0x80)) {
-                        --prev;
-                    }
-                }
-
-                uint32_t ucs4 = utf8::getChar(prev, text.end());
-
-                if (isWordBreak(ucs4))
-                    break;
-
-                startIter = prev;
-                ++scanCount;
-            }
-
-            std::string oldWord(startIter, endIter);
-
-            if (oldWord.empty()) {
-                processNormalKey(keyEvent, currentSym);
-                return;
-            }
-
-            EngineRebuildFromText(lotusEngine_.handle(), oldWord.c_str());
-
-            bool processed = EngineProcessKeyEvent(lotusEngine_.handle(), currentSym, keyEvent.rawKey().states()) != 0U;
-
-            if (!processed) {
-                keyEvent.forward();
-                ResetEngine(lotusEngine_.handle());
-                return;
-            }
-
-            auto        commitPtr  = UniqueCPtr<char>(EnginePullCommit(lotusEngine_.handle()));
-            auto        preeditPtr = UniqueCPtr<char>(EnginePullPreedit(lotusEngine_.handle()));
-
-            std::string newWord;
-            if (commitPtr && (*commitPtr.get() != 0))
-                newWord += commitPtr.get();
-            if (preeditPtr && (*preeditPtr.get() != 0))
-                newWord += preeditPtr.get();
-
-            std::string deletedPart;
-            std::string addedPart;
-            compareAndSplitStrings(oldWord, newWord, deletedPart, addedPart);
-            if ((deletedPart.empty() || deletedPart == oldWord) && addedPart == keyEvent.key().toString()) {
-                ResetEngine(lotusEngine_.handle());
-                keyEvent.forward();
-                return;
-            }
-
-            if (!deletedPart.empty() || !addedPart.empty()) {
-                size_t charsToDelete = utf8::length(deletedPart);
-
-                if (charsToDelete > 0) {
-                    ic->deleteSurroundingText(-static_cast<int>(charsToDelete), static_cast<int>(charsToDelete));
-                    std::this_thread::sleep_for(std::chrono::milliseconds(engine_->config().surrDeleteSleepMs.value() * charsToDelete));
-                }
-
-                if (!addedPart.empty()) {
-                    ic->commitString(addedPart);
-                    LOTUS_INFO("Commit: " + addedPart);
-                }
-
-                ResetEngine(lotusEngine_.handle());
-                keyEvent.filterAndAccept();
-                return;
-            }
-
-            ResetEngine(lotusEngine_.handle());
-            keyEvent.filterAndAccept();
-            return;
-        }
-    }
-
-    void LotusState::processNormalKey(KeyEvent& keyEvent, KeySym currentSym) {
-        auto* ic = keyEvent.inputContext();
-        ResetEngine(lotusEngine_.handle());
-        bool processed = EngineProcessKeyEvent(lotusEngine_.handle(), currentSym, keyEvent.rawKey().states()) != 0U;
-        if (processed) {
-            auto        commitPtr  = UniqueCPtr<char>(EnginePullCommit(lotusEngine_.handle()));
-            auto        preeditPtr = UniqueCPtr<char>(EnginePullPreedit(lotusEngine_.handle()));
-            std::string out;
-            if (commitPtr && (*commitPtr.get() != 0))
-                out += commitPtr.get();
-            if (preeditPtr && (*preeditPtr.get() != 0))
-                out += preeditPtr.get();
-
-            if (!out.empty()) {
-                LOTUS_INFO("Commit: " + out);
-                ic->commitString(out);
-            }
-
-            ResetEngine(lotusEngine_.handle());
-            keyEvent.filterAndAccept();
-        } else {
-            keyEvent.forward();
-        }
-    }
-
     void LotusState::handleDoubleSpaceReplacement() {
-        switch (realMode) {
-            case LotusMode::SurroundingText: {
-                ic_->deleteSurroundingText(-1, 1);
-                ic_->commitString(". ");
-                LOTUS_INFO("Commit: . ");
-
-                break;
-            }
-            default: { // Sen, Preedit, etc.
-                performReplacement(" ", ". ");
-                LOTUS_INFO("Commit: . ");
-                break;
-            }
-        }
+        performReplacement(" ", ". ");
+        LOTUS_INFO("Commit: . ");
         if (*engine_->config().autoCapitalizeAfterPunctuation) {
             isPrevPunctuation_ = true;
             shouldCapitalize_  = true;
@@ -1425,19 +1271,8 @@ namespace fcitx {
     void LotusState::handleDoubleHyphenReplacement() {
         // Em-dash (U+2014)
         std::string emDash = "—";
-        switch (realMode) {
-            case LotusMode::SurroundingText: {
-                ic_->deleteSurroundingText(-1, 1);
-                ic_->commitString(emDash);
-                LOTUS_INFO("Commit: — (em-dash)");
-                break;
-            }
-            default: { // Sen, Preedit, etc.
-                performReplacement("-", emDash);
-                LOTUS_INFO("Commit: — (em-dash)");
-                break;
-            }
-        }
+        performReplacement("-", emDash);
+        LOTUS_INFO("Commit: — (em-dash)");
     }
 
     void LotusState::handleOffModeMacro(KeyEvent& keyEvent, KeySym currentSym) {
@@ -1705,10 +1540,6 @@ namespace fcitx {
                 handleUinputMode(keyEvent, currentSym);
                 break;
             }
-            case LotusMode::SurroundingText: {
-                handleSurroundingText(keyEvent, currentSym);
-                break;
-            }
             case LotusMode::Preedit: {
                 handlePreeditMode(keyEvent, currentSym);
                 break;
@@ -1764,7 +1595,6 @@ namespace fcitx {
                 ic_->updatePreedit();
                 break;
             }
-            case LotusMode::SurroundingText:
             case LotusMode::Sen: {
                 ic_->inputPanel().reset();
                 break;
@@ -1796,7 +1626,6 @@ namespace fcitx {
                 ic_->updatePreedit();
                 break;
             }
-            case LotusMode::SurroundingText:
             case LotusMode::Sen: {
                 if (lotusEngine_) {
                     ResetEngine(lotusEngine_.handle());

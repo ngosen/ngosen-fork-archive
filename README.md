@@ -12,10 +12,11 @@ Bản 1.0 nhắm bốn thay đổi lớn. Chưa có ngày phát hành.
 - **Bỏ máy chủ nền uinput.** Xong: bộ gõ không còn chương trình chạy ngầm có quyền đặc biệt. Cài xong
   là gõ, không phải bật dịch vụ, không cần quyền thiết bị. Cập nhật từ bản cũ thì gói tự tắt và dọn
   dịch vụ cũ.
-- **Chỉ còn hai chế độ gõ: Gõ Sen và Preedit.** Gõ Sen là chế độ dùng cho mọi chỗ: gõ nhanh không mất
-  chữ, gõ đúng trong trình duyệt, thanh địa chỉ, Facebook, app Electron như Zalo, và terminal.
-  Preedit là chế độ hiện chữ gạch chân trong lúc gõ, dành cho app không hợp với Gõ Sen. Người dùng không
-  còn phải chọn giữa nhiều chế độ khó hiểu.
+- **Chỉ còn hai chế độ gõ: Gõ Sen và Preedit**, cùng chế độ Emoji để chọn biểu tượng cảm xúc. Gõ Sen là
+  chế độ dùng cho mọi chỗ: gõ nhanh không mất chữ, gõ đúng trong trình duyệt, thanh địa chỉ, Facebook,
+  app Electron như Zalo, và terminal. Preedit là chế độ hiện chữ gạch chân trong lúc gõ, dành cho app
+  không hợp với Gõ Sen. Người dùng không còn phải chọn giữa nhiều chế độ khó hiểu. Xong: chế độ
+  Surrounding Text đã gộp vào Gõ Sen.
 - **Lõi ghép dấu (bamboo-core) chuyển sang Rust.** Phần biến `tieengs` thành `tiếng` đang viết bằng
   Go, sẽ đổi sang bản viết bằng Rust. Chỉ đổi khi bản mới gõ ra y hệt bản cũ.
 - **Tách lõi Ngó Sen để dùng được ở nhiều nơi.** Ngoài fcitx5, Ngó Sen sẽ có bản cho IBus (bộ gõ mặc
@@ -24,7 +25,8 @@ Bản 1.0 nhắm bốn thay đổi lớn. Chưa có ngày phát hành.
 ## Nên dùng chế độ nào
 
 Dùng **Gõ Sen** làm chế độ gõ chính: chọn trong cửa sổ cài đặt Ngó Sen, mục chế độ mặc định. Chế độ
-này trước tên là `Uinput`; cấu hình cũ tự chuyển sang tên mới.
+này trước tên là `Uinput`; cấu hình cũ tự chuyển sang tên mới. Chế độ Surrounding Text cũ cũng tự chuyển
+thành Gõ Sen.
 
 Kiểu gõ được dùng và kiểm hằng ngày là **Telex**. VNI và các kiểu khác dùng được nhưng chưa kiểm kỹ.
 

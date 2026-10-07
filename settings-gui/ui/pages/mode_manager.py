@@ -35,26 +35,26 @@ from ui.pages.dynamic_settings import CardWidget
 # Mode constants as defined in C++ LotusEngine
 MODE_OFF = 0
 MODE_SEN = 2
-MODE_SURROUNDING = 4
 MODE_PREEDIT = 5
 MODE_EMOJI = 6
 MODE_DEFAULT = -1  # UI special value for "Use Global Default"
 
-# Former Smooth (1), Super Smooth (3) and Minecraft (8) rules load as Sen, as in the addon.
-FORMER_SEN_MODES = {1, 3, 8}
+# Former Smooth (1), Super Smooth (3), Surrounding Text (4) and Minecraft (8) rules load as Sen, as in
+# the addon.
+FORMER_SEN_MODES = {1, 3, 4, 8}
 FORMER_SEN_MODE_NAMES = {
     "Uinput",
     "Uinput (Smooth)",
     "Uinput (Slow)",
     "Uinput (Super Smooth)",
     "Minecraft",
+    "Surrounding Text",
 }
 
 MODE_INFO = {
     MODE_DEFAULT: {"title": "Default Typing", "icon": "preferences-system"},
     MODE_OFF: {"title": "OFF", "icon": "input-keyboard"},
     MODE_SEN: {"title": "Sen", "icon": "input-keyboard"},
-    MODE_SURROUNDING: {"title": "Surrounding Text", "icon": "text-field"},
     MODE_PREEDIT: {"title": "Preedit", "icon": "text-field"},
     MODE_EMOJI: {"title": "Emoji Picker", "icon": "face-smile"},
 }
@@ -452,7 +452,6 @@ class ModeManagerPage(QWidget):
         self.combo_global_mode = QComboBox()
         global_modes = [
             MODE_SEN,
-            MODE_SURROUNDING,
             MODE_PREEDIT,
             MODE_EMOJI,
             MODE_OFF,
@@ -488,7 +487,6 @@ class ModeManagerPage(QWidget):
 
         grid_modes = [
             MODE_SEN,
-            MODE_SURROUNDING,
             MODE_PREEDIT,
             MODE_EMOJI,
             MODE_OFF,

@@ -25,10 +25,6 @@ msgstr ""
 msgid "Sen"
 msgstr ""
 
-#: src/lotus-config.h:40 src/lotus-engine.cpp:986 src/lotus-engine.cpp:1094
-msgid "Surrounding Text"
-msgstr ""
-
 #: src/lotus-config.h:40 src/lotus-engine.cpp:987 src/lotus-engine.cpp:1095
 msgid "Preedit"
 msgstr ""
@@ -192,14 +188,6 @@ msgstr ""
 
 #: src/lotus-config.h:250
 msgid "Shortcut for Sen"
-msgstr ""
-
-#: src/lotus-config.h:257
-msgid "Show Surrounding Text"
-msgstr ""
-
-#: src/lotus-config.h:258
-msgid "Shortcut for Surrounding Text"
 msgstr ""
 
 #: src/lotus-config.h:259

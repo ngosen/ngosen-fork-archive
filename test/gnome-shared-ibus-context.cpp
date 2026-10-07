@@ -40,7 +40,6 @@ namespace {
             case fcitx::LotusMode::Off: return "Off";
             case fcitx::LotusMode::Preedit: return "Preedit";
             case fcitx::LotusMode::Sen: return "Sen";
-            case fcitx::LotusMode::SurroundingText: return "SurroundingText";
             case fcitx::LotusMode::Emoji: return "Emoji";
             default: return "Unknown";
         }

@@ -2,7 +2,8 @@
 /**
  * @file mode-name-migration.cpp
  * @brief Headless test: every former name of the direct typing mode (Uinput, and before that Smooth,
- *        Slow, Super Smooth, Minecraft) loads as Sen, with its menu visibility and shortcut kept.
+ *        Slow, Super Smooth, Minecraft) and the removed Surrounding Text mode load as Sen, with the
+ *        menu visibility and shortcut of Uinput kept.
  *
  * The mode is persisted by name in lotus.conf and by number in lotus-app-rules.conf. An unknown
  * name makes fcitx keep the option default (Preedit), so without a migration the user would
@@ -52,27 +53,28 @@ int main() {
     TestInstance       testInstance;
     fcitx::LotusEngine engine(&testInstance.instance);
     check("lotus.conf with \"Uinput (Super Smooth)\" loads as Sen", engine.config().mode.value() == fcitx::LotusMode::Sen);
-    check("old ModeOrder lists Sen once", *engine.config().modeOrder == "Sen,SurroundingText,Preedit,Emoji,Off,Default");
+    check("old ModeOrder lists Sen once", *engine.config().modeOrder == "Sen,Preedit,Emoji,Off,Default");
     check("ShowModeUinput=False hides Sen", !*engine.config().showModeSen);
     check("ShortcutUinput=z becomes the Sen shortcut", *engine.config().shortcutSen == "z");
 
     {
         fcitx::RawConfig config;
-        config.setValueByPath("ModeOrder", "Preedit,SuperSmooth,Off,Uinput,Smooth");
+        config.setValueByPath("ModeOrder", "Preedit,SuperSmooth,Off,Uinput,Smooth,SurroundingText");
         engine.setConfig(config);
         check("setConfig ModeOrder merges former names into Sen", *engine.config().modeOrder == "Preedit,Sen,Off");
     }
 
     // setConfig is the path the settings GUI and fcitx5-configtool use.
-    for (const char* legacy : {"Uinput", "Uinput (Smooth)", "Uinput (Slow)", "Uinput (Super Smooth)", "Minecraft"}) {
+    for (const char* legacy : {"Uinput", "Uinput (Smooth)", "Uinput (Slow)", "Uinput (Super Smooth)", "Minecraft", "Surrounding Text"}) {
         fcitx::RawConfig config;
         config.setValueByPath("Mode", legacy);
         engine.setConfig(config);
         check(std::string("setConfig Mode=\"") + legacy + "\" gives Sen", engine.config().mode.value() == fcitx::LotusMode::Sen);
     }
 
-    // Per-app rules store the mode as a number: 1 = Smooth, 2 = Uinput, 3 = Super Smooth, 8 = Minecraft.
-    for (int legacy : {1, 2, 3, 8}) {
+    // Per-app rules store the mode as a number: 1 = Smooth, 2 = Uinput, 3 = Super Smooth, 4 = Surrounding
+    // Text, 8 = Minecraft.
+    for (int legacy : {1, 2, 3, 4, 8}) {
         check("app rule mode " + std::to_string(legacy) + " gives Sen", fcitx::intToMode(legacy) == fcitx::LotusMode::Sen);
     }
 

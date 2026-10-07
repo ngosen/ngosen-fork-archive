@@ -26,10 +26,6 @@ msgstr "Tắt"
 msgid "Sen"
 msgstr "Gõ Sen"
 
-#: src/lotus-config.h:40 src/lotus-engine.cpp:986 src/lotus-engine.cpp:1094
-msgid "Surrounding Text"
-msgstr "Văn bản xung quanh"
-
 #: src/lotus-config.h:40 src/lotus-engine.cpp:987 src/lotus-engine.cpp:1095
 msgid "Preedit"
 msgstr "Gạch chân"
@@ -194,14 +190,6 @@ msgstr "Hiển thị chế độ Gõ Sen"
 #: src/lotus-config.h:250
 msgid "Shortcut for Sen"
 msgstr "Phím tắt cho Gõ Sen"
-
-#: src/lotus-config.h:257
-msgid "Show Surrounding Text"
-msgstr "Hiển thị chế độ Văn bản xung quanh"
-
-#: src/lotus-config.h:258
-msgid "Shortcut for Surrounding Text"
-msgstr "Phím tắt cho Văn bản xung quanh"
 
 #: src/lotus-config.h:259
 msgid "Show Preedit"

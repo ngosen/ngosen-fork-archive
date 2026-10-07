@@ -12,6 +12,7 @@
 #include "ngosen-app-quirks.h"
 #include "ngosen-clock.h"
 #include "ngosen-fcitx-host.h"
+#include "ngosen-log.h"
 #include "ngosen-utf8.h"
 #include "ngosen-xtest.h"
 #include "lotus.h"
@@ -90,7 +91,7 @@ namespace fcitx {
 
     void LotusState::sendBackspaceKeys(int count) const {
         if (!host_->pressSystemKeys(count)) {
-            LOTUS_ERROR("Cannot send backspaces: XTEST is unavailable");
+            NGOSEN_ERROR("Cannot send backspaces: XTEST is unavailable");
         }
     }
 
@@ -223,7 +224,7 @@ namespace fcitx {
             keyEvent.filterAndAccept();
         if (auto commit = UniqueCPtr<char>(EnginePullCommit(lotusEngine_.handle()))) {
             if (commit && (*commit.get() != 0)) {
-                LOTUS_INFO("Commit: " + std::string(commit.get()));
+                NGOSEN_INFO("Commit: " + std::string(commit.get()));
                 host_->commitText(commit.get());
             }
         }
@@ -258,7 +259,7 @@ namespace fcitx {
 
     void LotusState::pickEmoji(const EmojiEntry& entry) {
         host_->commitText(entry.output);
-        LOTUS_INFO("Emoji committed: " + entry.output);
+        NGOSEN_INFO("Emoji committed: " + entry.output);
 
         engine_->emojiLoader().recordHistory(entry);
 
@@ -576,7 +577,7 @@ namespace fcitx {
 
     void LotusState::finishReplacement(const char* reason, bool fromTimer) {
         const auto elapsedMs = (ngosen::monotonicUs() - surr_wait_started_at_) / 1000;
-        LOTUS_INFO("Surr wait " + std::string(reason) + " after " + std::to_string(elapsedMs) + " ms");
+        NGOSEN_INFO("Surr wait " + std::string(reason) + " after " + std::to_string(elapsedMs) + " ms");
         if (std::string(reason) == "timeout") {
             surr_snapshot_trusted_ = false;
             ++surr_timeout_streak_;
@@ -586,7 +587,7 @@ namespace fcitx {
                 if (++surr_frozen_streak_ >= 2 && !surr_frozen_) {
                     surr_frozen_             = true;
                     surr_frozen_probe_count_ = 0;
-                    LOTUS_INFO("Surr frozen: stop waiting");
+                    NGOSEN_INFO("Surr frozen: stop waiting");
                 }
             } else {
                 surr_frozen_streak_ = 0;
@@ -597,7 +598,7 @@ namespace fcitx {
             surr_frozen_streak_    = 0;
             if (surr_frozen_) {
                 surr_frozen_ = false;
-                LOTUS_INFO("Surr frozen: resume waiting");
+                NGOSEN_INFO("Surr frozen: resume waiting");
             }
         }
         surr_wait_pending_    = false;
@@ -661,7 +662,7 @@ namespace fcitx {
         // event-driven wait times out and commits ahead of the backspaces. Use the timed path there.
         const bool waitEvent = engine_->options().waitSurroundingEvent && !ngosen::surroundingTextLags(host_->field());
         if (waitEvent && emptySnapshot) {
-            LOTUS_INFO("Surr wait skip: empty snapshot");
+            NGOSEN_INFO("Surr wait skip: empty snapshot");
         }
         bool skipFrozenWait = false;
         if (waitEvent && !emptySnapshot && surr_frozen_) {
@@ -682,7 +683,7 @@ namespace fcitx {
             // After a timeout the app is lagging (Firefox) and its snapshot is stale: skip the
             // immediate check.
             if (surr_snapshot_trusted_ && deletionLooksDone()) {
-                LOTUS_INFO("Skip retry");
+                NGOSEN_INFO("Skip retry");
                 deliverAfterSettle("immediate", false);
                 return true;
             }
@@ -723,12 +724,12 @@ namespace fcitx {
         // Validate surr cursor pos should match realtextLen after all BS applied
         const auto surr = host_->surrounding();
         if (skipFrozenWait) {
-            LOTUS_INFO("Skip retry (frozen)"); // retrying 3 x 2 ms is pointless on a frozen snapshot
+            NGOSEN_INFO("Skip retry (frozen)"); // retrying 3 x 2 ms is pointless on a frozen snapshot
         } else if (surr.isValid() && surr.cursor() == realtextLen.load(std::memory_order_acquire)) {
-            LOTUS_INFO("Skip retry");
+            NGOSEN_INFO("Skip retry");
         } else if (!host_->field().surroundingText) {
             // No surrounding text capability (gnome-terminal, Chromium on X11): retrying cannot help.
-            LOTUS_INFO("Skip retry (no surrounding capability)");
+            NGOSEN_INFO("Skip retry (no surrounding capability)");
         } else {
             // Retry x3 (2 ms each) for apps whose snapshot is not valid yet. Use a timer, not
             // sleep_for, so the event loop can deliver a fresh snapshot.
@@ -766,7 +767,7 @@ namespace fcitx {
                 }
                 // The user really switched windows: the old field can no longer take the text. Reset
                 // only this field's state; is_deleting_ is shared and the new field may be replacing.
-                LOTUS_INFO("Timer: input context lost focus, dropping text");
+                NGOSEN_INFO("Timer: input context lost focus, dropping text");
                 surr_wait_pending_       = false;
                 surr_wait_timer_only_    = false;
                 expected_backspaces_     = 0;
@@ -871,7 +872,7 @@ namespace fcitx {
         // Our own selection for overtyping moves the anchor too.
         if (!jumped || is_deleting_.load(std::memory_order_acquire))
             return;
-        LOTUS_INFO("Cursor moved without an edit");
+        NGOSEN_INFO("Cursor moved without an edit");
         needEngineReset.store(true, std::memory_order_release);
         g_mouse_clicked.store(true, std::memory_order_release);
     }
@@ -913,7 +914,7 @@ namespace fcitx {
         });
         // forwardKey does not carry Shift into the selection, so press the keys like a real keyboard.
         sendSelectKeys(charCount);
-        LOTUS_INFO("Select " + std::to_string(charCount) + " chars");
+        NGOSEN_INFO("Select " + std::to_string(charCount) + " chars");
     }
 
     // The field did not report the selection in time. Do not type over it: the cursor has moved and
@@ -930,7 +931,7 @@ namespace fcitx {
             host_->forwardKey(ngosen::EditKey::Right, false);
             host_->forwardKey(ngosen::EditKey::Right, true);
         }
-        LOTUS_INFO("Overtype gave up after " + std::to_string((ngosen::monotonicUs() - overtype_started_at_) / 1000) + " ms, moved cursor right " + std::to_string(rightPresses));
+        NGOSEN_INFO("Overtype gave up after " + std::to_string((ngosen::monotonicUs() - overtype_started_at_) / 1000) + " ms, moved cursor right " + std::to_string(rightPresses));
         overtype_pending_   = false;
         overtype_via_xtest_ = false;
         pending_commit_string_.clear();
@@ -946,7 +947,7 @@ namespace fcitx {
 
     void LotusState::finishOvertype(const char* reason, bool fromTimer) {
         const auto elapsedMs = (ngosen::monotonicUs() - overtype_started_at_) / 1000;
-        LOTUS_INFO("Overtype " + std::string(reason) + " after " + std::to_string(elapsedMs) + " ms");
+        NGOSEN_INFO("Overtype " + std::string(reason) + " after " + std::to_string(elapsedMs) + " ms");
         overtype_pending_   = false;
         overtype_via_xtest_ = false;
         if (!fromTimer && overtype_timer_) {
@@ -961,7 +962,7 @@ namespace fcitx {
     }
 
     void LotusState::performReplacement(const std::string& deletedPart, const std::string& addedPart) {
-        LOTUS_INFO("Perform replacement: " + deletedPart + " -> " + addedPart); //NOLINT
+        NGOSEN_INFO("Perform replacement: " + deletedPart + " -> " + addedPart); //NOLINT
         current_backspace_count_ = 0;
         pending_commit_string_   = addedPart;
         expected_backspaces_     = static_cast<int>(ngosen::utf8::length(deletedPart));
@@ -1028,11 +1029,11 @@ namespace fcitx {
         is_deleting_.store(true, std::memory_order_release);
         if (isSurrText) {
             host_->deleteSurrounding(-expected_backspaces_, expected_backspaces_);
-            LOTUS_INFO("Delete using surrounding text");
+            NGOSEN_INFO("Delete using surrounding text");
             std::this_thread::sleep_for(std::chrono::milliseconds(engine_->options().surrDeleteSleepMs * expected_backspaces_));
             if (!pending_commit_string_.empty()) {
                 host_->commitText(pending_commit_string_);
-                LOTUS_INFO("Commit: " + pending_commit_string_);
+                NGOSEN_INFO("Commit: " + pending_commit_string_);
                 std::this_thread::sleep_for(std::chrono::milliseconds(engine_->options().surrCommitSleepMs * ngosen::utf8::length(addedPart)));
             }
             expected_backspaces_     = 0;
@@ -1058,7 +1059,7 @@ namespace fcitx {
             } else {
                 forwardBackspaces(count);
             }
-            LOTUS_INFO("Forward " + std::to_string(count) + " backspaces");
+            NGOSEN_INFO("Forward " + std::to_string(count) + " backspaces");
             waitForDeletion(nullptr, 4);
             // XIM, IBus and D-Bus clients queue forwarded keys, and the commit can overtake them.
             if (host_->field().frontend != "wayland" && surr_wait_timer_only_ && surr_wait_timer_) {
@@ -1067,7 +1068,7 @@ namespace fcitx {
             return;
         }
         sendBackspaceKeys(expected_backspaces_);
-        LOTUS_INFO("Send " + std::to_string(expected_backspaces_) + " backspaces");
+        NGOSEN_INFO("Send " + std::to_string(expected_backspaces_) + " backspaces");
     }
 
     bool LotusState::checkForwardSpecialKey(KeyEvent& keyEvent, KeySym& currentSym) {
@@ -1182,7 +1183,7 @@ namespace fcitx {
 #endif
                     }
                     host_->commitText(addedPart);
-                    LOTUS_INFO("Commit: " + addedPart);
+                    NGOSEN_INFO("Commit: " + addedPart);
                     keyEvent.filterAndAccept();
                 } else {
                     keyEvent.forward();
@@ -1224,7 +1225,7 @@ namespace fcitx {
                     oldPreBuffer_ = preeditStr;
                     if (wasAutoCapitalized || addedPart != keyUtf8) {
                         host_->commitText(addedPart);
-                        LOTUS_INFO("Commit: " + addedPart);
+                        NGOSEN_INFO("Commit: " + addedPart);
                         keyEvent.filterAndAccept();
                         isCommit = true;
                     }
@@ -1234,7 +1235,7 @@ namespace fcitx {
                 }
             } else {
                 if (!canSendBackspaces()) {
-                    LOTUS_ERROR("Cannot send backspaces here, commit rawkey");
+                    NGOSEN_ERROR("Cannot send backspaces here, commit rawkey");
                     std::string rawKey = keyEvent.key().toString();
                     if (!rawKey.empty()) {
                         host_->commitText(rawKey);
@@ -1255,7 +1256,7 @@ namespace fcitx {
 
     void LotusState::handleDoubleSpaceReplacement() {
         performReplacement(" ", ". ");
-        LOTUS_INFO("Commit: . ");
+        NGOSEN_INFO("Commit: . ");
         if (engine_->options().autoCapitalizeAfterPunctuation) {
             isPrevPunctuation_ = true;
             shouldCapitalize_  = true;
@@ -1266,7 +1267,7 @@ namespace fcitx {
         // Em-dash (U+2014)
         std::string emDash = "—";
         performReplacement("-", emDash);
-        LOTUS_INFO("Commit: — (em-dash)");
+        NGOSEN_INFO("Commit: — (em-dash)");
     }
 
     void LotusState::handleOffModeMacro(KeyEvent& keyEvent, KeySym currentSym) {
@@ -1309,7 +1310,7 @@ namespace fcitx {
             }
 
             if (isMacroExpansion) {
-                LOTUS_INFO("Macro expansion: '" + oldPreBuffer_ + "' -> '" + commitStr + "'");
+                NGOSEN_INFO("Macro expansion: '" + oldPreBuffer_ + "' -> '" + commitStr + "'");
                 // Try backspaces first, fallback to deleteSurroundingText, then plain commit
                 if (canSendBackspaces() && !oldPreBuffer_.empty()) {
                     performReplacement(oldPreBuffer_, commitStr);
@@ -1400,7 +1401,7 @@ namespace fcitx {
             }
         }
         if (needEngineReset.load() && realMode != LotusMode::Off) {
-            LOTUS_INFO("Need engine reset");
+            NGOSEN_INFO("Need engine reset");
             oldPreBuffer_.clear();
             hasHistory_ = false;
             ResetEngine(lotusEngine_.handle());
@@ -1463,7 +1464,7 @@ namespace fcitx {
             ngosen::forwardsBackspaces(host_->field())) {
             // The XIM client handed a forwarded backspace back unprocessed. Let it through so the
             // client applies it, and commit after it.
-            LOTUS_INFO("XIM handed back a forwarded backspace");
+            NGOSEN_INFO("XIM handed back a forwarded backspace");
             deferTimedCommit(ngosen::monotonicUs() + ForwardWaitUs);
             return;
         }
@@ -1491,7 +1492,7 @@ namespace fcitx {
             } else {
                 std::string keyUtf8Check = Key::keySymToUTF8(currentSym);
                 if (!keyUtf8Check.empty() && buffered_keys_.size() < MAX_BUFFERED_KEYS) {
-                    LOTUS_WARN("Typing so fast, add key to queue");
+                    NGOSEN_WARN("Typing so fast, add key to queue");
                     buffered_keys_.push_back({.sym = currentSym, .state = keyEvent.rawKey().states()});
                 }
                 keyEvent.filterAndAccept();
@@ -1572,7 +1573,7 @@ namespace fcitx {
                 UniqueCPtr<char> commit(EnginePullCommit(lotusEngine_.handle()));
                 if (commit && (*commit.get() != 0)) {
                     host_->commitText(commit.get());
-                    LOTUS_INFO("Commit: " + std::string(commit.get()));
+                    NGOSEN_INFO("Commit: " + std::string(commit.get()));
                 }
             }
             ResetEngine(lotusEngine_.handle());
@@ -1633,7 +1634,7 @@ namespace fcitx {
     }
 
     void LotusState::clearAllBuffers() {
-        LOTUS_DEBUG("Clear all buffers");
+        NGOSEN_DEBUG("Clear all buffers");
         if (is_deleting_.load(std::memory_order_acquire)) {
             return;
         }
@@ -1668,11 +1669,11 @@ namespace fcitx {
         auto        flush = [&] {
             if (!out.empty()) {
                 host_->commitText(out);
-                LOTUS_INFO("Commit: " + out);
+                NGOSEN_INFO("Commit: " + out);
                 out.clear();
             }
         };
-        LOTUS_INFO("Starting replay buffered keys");
+        NGOSEN_INFO("Starting replay buffered keys");
         if (buffered_keys_.empty()) {
             flush();
             return;
@@ -1763,7 +1764,7 @@ namespace fcitx {
             }
         }
         flush();
-        LOTUS_INFO("Replay buffered keys done");
+        NGOSEN_INFO("Replay buffered keys done");
     }
 
     bool LotusState::isMacroSkipModifier(KeySym sym) const {
@@ -1791,7 +1792,7 @@ namespace fcitx {
                 tracking_modifier_tap_ = false;
                 macro_skip_            = true;
                 EngineSetMacroEnabled(lotusEngine_.handle(), 0);
-                LOTUS_INFO("Macro skip enabled for next word");
+                NGOSEN_INFO("Macro skip enabled for next word");
             }
         } else {
             tracking_modifier_tap_ = true;

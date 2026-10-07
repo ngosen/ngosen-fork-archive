@@ -14,6 +14,7 @@ set(fcitx_lotus_core_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/src/lotus-utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ngosen-xtest.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ngosen-fcitx-host.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ngosen-fcitx-log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ngosen-app-quirks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ngosen-utf8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ngosen-pointer.cpp

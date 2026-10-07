@@ -11,8 +11,6 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <vector>
-#include <unistd.h>
 
 namespace {
 
@@ -158,8 +156,6 @@ namespace {
 } // namespace
 
 int main() {
-    const std::string socketNamespace = "test-" + std::to_string(getpid());
-    setenv("LOTUS_SOCKET_NAMESPACE", socketNamespace.c_str(), 1);
     // A plain X11 session: XIM forwards there as well as under XWayland.
     unsetenv("WAYLAND_DISPLAY");
 

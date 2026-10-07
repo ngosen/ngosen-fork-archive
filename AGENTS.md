@@ -44,10 +44,10 @@ a careful human wrote it, and the person sending it must be able to explain ever
 - **A bug fix comes with a test that fails without it.** Check this by undoing the fix (or breaking
   its guard) and watching that test, and only that test, fail.
 - **Never forward backspaces to SDL games.** SDL takes only commits and preedit, so forwarded
-  backspaces never reach it; it needs real key presses, through XTEST on an X11 session and the
-  uinput server elsewhere. When changing which frontends forward backspaces, keep the
-  `sdlKeepsServer` checks in `test/ibus-dbus-forward-backspaces.cpp` and the SDL case in
-  `test/x11-xtest-replacement.cpp` passing.
+  backspaces never reach it; it needs real key presses, which only XTEST on an X11 session provides.
+  When changing which frontends forward backspaces, keep the `sdlGetsNoDeletion` checks in
+  `test/ibus-dbus-forward-backspaces.cpp` and the SDL case in `test/x11-xtest-replacement.cpp`
+  passing.
 
 ## Commits
 

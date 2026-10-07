@@ -17,7 +17,6 @@
 #include "lotus-icon-resolver.h"
 #include "lotus-plasma-theme.h"
 #include <optional>
-#include <sys/socket.h>
 #include <utility>
 
 #include <fcitx-config/iniparser.h>
@@ -359,16 +358,8 @@ namespace fcitx {
 
     LotusEngine::~LotusEngine() {
         stop_flag_monitor.store(true, std::memory_order_release);
-        int fd = mouse_socket_fd.load(std::memory_order_acquire);
-        if (fd >= 0) {
-            shutdown(fd, SHUT_RDWR);
-        }
         if (mouse_thread.joinable()) {
             mouse_thread.join();
-        }
-        int old_fd = uinput_client_fd_.exchange(-1);
-        if (old_fd != -1) {
-            close(old_fd);
         }
         LOTUS_INFO("Engine destroyed.");
     }

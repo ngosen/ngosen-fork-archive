@@ -14,8 +14,6 @@
 #include <memory>
 #include <string>
 
-#include <unistd.h>
-
 namespace {
 
     void reportFailure(const std::string& step, const std::string& expected, const std::string& actual) {
@@ -47,9 +45,6 @@ namespace {
 } // namespace
 
 int main() {
-    const std::string socketNamespace = "test-" + std::to_string(getpid());
-    setenv("LOTUS_SOCKET_NAMESPACE", socketNamespace.c_str(), 1);
-
     configureTestPaths("fcitx5-lotus-super-smooth-settle-plain-field");
     TestInstance       testInstance;
     fcitx::LotusEngine engine(&testInstance.instance);

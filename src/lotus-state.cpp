@@ -23,8 +23,6 @@
 
 #include <algorithm>
 #include <string>
-#include <sys/socket.h>
-#include <sys/un.h>
 
 #include <thread>
 
@@ -91,68 +89,9 @@ namespace fcitx {
         EngineSetOption(lotusEngine_.handle(), &option);
     }
 
-    bool LotusState::connect_uinput_server() {
-        if (uinput_client_fd_ >= 0)
-            return true;
-        const std::string current_path = buildSocketPath("kb_socket");
-        int               current_fd   = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
-        if (current_fd < 0) {
-            LOTUS_ERROR("Failed to create socket: " + std::string(strerror(errno)));
-            return false;
-        }
-
-        struct sockaddr_un addr{};
-        addr.sun_family = AF_UNIX;
-
-        addr.sun_path[0] = '\0';
-        memcpy(&addr.sun_path[1], current_path.c_str(), current_path.length());
-        socklen_t len = offsetof(struct sockaddr_un, sun_path) + current_path.length() + 1;
-
-        if (connect(current_fd, (struct sockaddr*)&addr, len) == 0) {
-            // The socket name is guessable, so whoever binds it first would learn word lengths.
-            if (!isTrustedServerSocket(current_fd)) {
-                close(current_fd);
-                return false;
-            }
-            uinput_client_fd_ = current_fd;
-            return true;
-        }
-        LOTUS_ERROR("Failed to connect to socket: " + std::string(strerror(errno)));
-        close(current_fd);
-        int old_fd = uinput_client_fd_.exchange(-1);
-        if (old_fd != -1) {
-            close(old_fd);
-        }
-        return false;
-    }
-
-    int LotusState::setup_uinput() {
-        return connect_uinput_server() ? uinput_client_fd_.load(std::memory_order_acquire) : -1;
-    }
-
-    void LotusState::send_backspace_uinput(int count) const {
-        // On X11, XTEST presses the keys the uinput server would, without the server.
-        if (xtestAvailable()) {
-            xtestSendKeys(count);
-            return;
-        }
-        if (uinput_client_fd_ < 0 && !connect_uinput_server()) {
-            LOTUS_ERROR("Cannot send backspace since cannot connect to uinput server");
-            return;
-        }
-
-        ssize_t n = send(uinput_client_fd_, &count, sizeof(count), MSG_NOSIGNAL);
-
-        if (n < 0) {
-            LOTUS_WARN("Failed to send backspace: " + std::string(strerror(errno)));
-            int old_fd = uinput_client_fd_.exchange(-1);
-            if (old_fd != -1) {
-                close(old_fd);
-            }
-            if (connect_uinput_server()) {
-                LOTUS_INFO("Reconnected to uinput server successfully");
-                send(uinput_client_fd_, &count, sizeof(count), MSG_NOSIGNAL);
-            }
+    void LotusState::sendBackspaceKeys(int count) const {
+        if (!xtestSendKeys(count)) {
+            LOTUS_ERROR("Cannot send backspaces: XTEST is unavailable");
         }
     }
 
@@ -724,7 +663,7 @@ namespace fcitx {
     }
 
     // Waits until the app has applied the backspaces, then commits. `event` is the returning sentinel
-    // backspace on the uinput path, or null when the backspaces were forwarded.
+    // backspace on the XTEST path, or null when the backspaces were forwarded.
     bool LotusState::waitForDeletion(KeyEvent* event, int sleepTime) {
         // Some apps (Konsole) declare surrounding text but always send it empty; nothing can match,
         // so use the sleeping path.
@@ -888,7 +827,7 @@ namespace fcitx {
     }
 
     bool LotusState::canSendBackspaces() const {
-        return forwardsBackspaces(ic_) || uinput_client_fd_ >= 0 || xtestAvailable();
+        return forwardsBackspaces(ic_) || xtestAvailable();
     }
 
     void LotusState::deferTimedCommit(uint64_t deliverAtUs) {
@@ -919,8 +858,8 @@ namespace fcitx {
         g_mouse_clicked.store(true, std::memory_order_release);
     }
 
-    void LotusState::send_select_uinput(int charCount) const {
-        send_backspace_uinput(-charCount);
+    void LotusState::sendSelectKeys(int charCount) const {
+        sendBackspaceKeys(-charCount);
     }
 
     void LotusState::selectAndOvertype(const std::string& addedPart, int charCount, bool viaXTest) {
@@ -966,9 +905,8 @@ namespace fcitx {
             }
             return false;
         });
-        // forwardKey does not carry Shift into the selection, so send the keys through the uinput
-        // server like a real keyboard.
-        send_select_uinput(charCount);
+        // forwardKey does not carry Shift into the selection, so press the keys like a real keyboard.
+        sendSelectKeys(charCount);
         LOTUS_INFO("Select " + std::to_string(charCount) + " chars");
     }
 
@@ -1100,7 +1038,7 @@ namespace fcitx {
             return;
         }
         if (forwardsBackspaces(ic_)) {
-            // The uinput count includes a sentinel that comes back to us; forwarded keys never do.
+            // The XTEST count includes a sentinel that comes back to us; forwarded keys never do.
             const int count = expected_backspaces_ - 1;
             if (getFrontendName(ic_) == "xim") {
                 // We are inside the client's synchronous XIM request for the key that triggered this
@@ -1123,7 +1061,7 @@ namespace fcitx {
             }
             return;
         }
-        send_backspace_uinput(expected_backspaces_);
+        sendBackspaceKeys(expected_backspaces_);
         LOTUS_INFO("Send " + std::to_string(expected_backspaces_) + " backspaces");
     }
 
@@ -1191,10 +1129,6 @@ namespace fcitx {
         if (checkForwardSpecialKey(keyEvent, currentSym)) {
             keyEvent.forward();
             return;
-        }
-
-        if (uinput_client_fd_ < 0 && !forwardsBackspaces(ic_) && !xtestAvailable()) {
-            setup_uinput();
         }
 
         if (isBackspace(currentSym) || currentSym == FcitxKey_Return) {
@@ -1295,7 +1229,7 @@ namespace fcitx {
                 }
             } else {
                 if (!canSendBackspaces()) {
-                    LOTUS_ERROR("Cannot connect to uinput server, commit rawkey");
+                    LOTUS_ERROR("Cannot send backspaces here, commit rawkey");
                     std::string rawKey = keyEvent.key().toString();
                     if (!rawKey.empty()) {
                         ic_->commitString(rawKey);
@@ -1501,10 +1435,6 @@ namespace fcitx {
             return;
         }
 
-        if (uinput_client_fd_ < 0 && !forwardsBackspaces(ic_) && !xtestAvailable()) {
-            connect_uinput_server();
-        }
-
         if (isBackspace(currentSym)) {
             EngineProcessKeyEvent(lotusEngine_.handle(), FcitxKey_BackSpace, 0);
             auto preeditC = UniqueCPtr<char>(EnginePullPreedit(lotusEngine_.handle()));
@@ -1540,7 +1470,7 @@ namespace fcitx {
 
             if (isMacroExpansion) {
                 LOTUS_INFO("Macro expansion: '" + oldPreBuffer_ + "' -> '" + commitStr + "'");
-                // Try uinput replacement first, fallback to deleteSurroundingText, then plain commit
+                // Try backspaces first, fallback to deleteSurroundingText, then plain commit
                 if (canSendBackspaces() && !oldPreBuffer_.empty()) {
                     performReplacement(oldPreBuffer_, commitStr);
                 } else if (ic_->capabilityFlags().test(CapabilityFlag::SurroundingText)) {
@@ -1619,10 +1549,6 @@ namespace fcitx {
             // moving the cursor (that would discard the pending commit).
             keyEvent.forward();
             return;
-        }
-        if (uinput_client_fd_ < 0 && !forwardsBackspaces(ic_) && !xtestAvailable()) {
-            LOTUS_WARN("Cannot connect to uinput server, reconnecting....");
-            connect_uinput_server();
         }
         // This safety valve silently clears the flag on the next key. Skip it while a wait is pending,
         // otherwise the pending commit is thrown away.

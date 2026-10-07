@@ -12,8 +12,6 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
-
 namespace {
 
     void reportFailure(const std::string& step, const std::string& expected, const std::string& actual, const std::string& meaning) {
@@ -51,8 +49,6 @@ int main(int argc, char** argv) {
 
     // Own a private socket name so a running fcitx5-lotus-server does not
     // already hold the one the listener binds.
-    const std::string socketNamespace = "test-" + std::to_string(getpid());
-    setenv("LOTUS_SOCKET_NAMESPACE", socketNamespace.c_str(), 1);
 
     configureTestPaths("fcitx5-lotus-held-key-repeat");
     TestInstance       testInstance;

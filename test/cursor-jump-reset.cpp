@@ -48,8 +48,11 @@ namespace {
                 pumpEventLoop(testInstance_.instance, 60);
                 if (context_->commits().size() > commits) {
                     for (size_t i = commits; i < context_->commits().size(); ++i) {
-                        if (cursorBeforeText_)
+                        if (cursorBeforeText_) {
+                            report();
+                            report();
                             report(fcitx::utf8::length(context_->commits()[i]));
+                        }
                         insert(context_->commits()[i]);
                     }
                     report();
@@ -66,7 +69,8 @@ namespace {
             report();
         }
 
-        // Firefox in some web editors reports the cursor after a commit before the committed text.
+        // Firefox in some web editors repeats the old state, then reports the cursor after a commit
+        // before the committed text.
         // Those editors keep zero-width spaces after the caret, so the early cursor is still in range.
         void reportCursorBeforeText() {
             cursorBeforeText_ = true;

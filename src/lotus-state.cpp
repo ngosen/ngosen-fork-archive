@@ -909,13 +909,15 @@ namespace fcitx {
         const bool sameText = hasLastSurrounding_ && s.text() == lastSurroundingText_;
         bool       jumped   = sameText && (s.cursor() != lastSurroundingCursor_ || s.anchor() != lastSurroundingAnchor_);
         // Some editors (Lark in Firefox) report the cursor past our commit before the committed text.
-        if (jumped && unreportedCommitLength_ > 0 && s.cursor() == s.anchor() && s.cursor() == lastSurroundingCursor_ + unreportedCommitLength_)
-            jumped = false;
-        unreportedCommitLength_ = 0;
-        lastSurroundingText_    = s.text();
-        lastSurroundingCursor_  = s.cursor();
-        lastSurroundingAnchor_  = s.anchor();
-        hasLastSurrounding_     = true;
+        const bool echo = jumped && unreportedCommitLength_ > 0 && s.cursor() == s.anchor() && s.cursor() == lastSurroundingCursor_ + unreportedCommitLength_;
+        // Firefox repeats the old state before the echo, so only a change ends the wait.
+        if (jumped || !sameText)
+            unreportedCommitLength_ = 0;
+        jumped                 = jumped && !echo;
+        lastSurroundingText_   = s.text();
+        lastSurroundingCursor_ = s.cursor();
+        lastSurroundingAnchor_ = s.anchor();
+        hasLastSurrounding_    = true;
         // Our own selection for overtyping moves the anchor too.
         if (!jumped || is_deleting_.load(std::memory_order_acquire))
             return;

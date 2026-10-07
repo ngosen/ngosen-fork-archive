@@ -81,6 +81,8 @@ add_lotus_headless_test(wayland_forward_backspaces
     wayland-forward-backspaces.cpp "integration;smooth")
 add_lotus_headless_test(xim_forward_handback
     xim-forward-handback.cpp "integration;smooth")
+add_lotus_headless_test(xim_backspace_echo
+    xim-backspace-echo.cpp "integration;smooth")
 add_lotus_headless_test(ibus_dbus_forward_backspaces
     ibus-dbus-forward-backspaces.cpp "integration;smooth")
 add_lotus_headless_test(cursor_jump_reset

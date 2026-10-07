@@ -151,6 +151,7 @@ namespace fcitx {
         std::string                    surr_wait_deleted_;               ///< part that must disappear
         std::string                    surr_wait_sent_snapshot_;         ///< "text\x1fcursor" when the backspaces were sent
         int                            surr_wait_event_count_         = 0;
+        int                            xim_backspaces_unapplied_      = 0;     ///< forwarded backspaces whose release has not come back
         bool                           surr_wait_saw_other_snapshot_  = false; ///< an event differed from the send-time snapshot
         bool                           surr_wait_sent_snapshot_fresh_ = false; ///< send-time snapshot still showed the text to delete
 
@@ -249,6 +250,7 @@ namespace fcitx {
         bool canSendBackspaces() const;
         // Moves the commit of a timer-only wait later, never earlier.
         void deferTimedCommit(uint64_t deliverAtUs);
+        void noteBackspaceApplied(const ngosen::KeyPress& keyEvent);
 
         /**
          * @brief Replaces text by sending backspaces, then committing.

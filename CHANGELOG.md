@@ -65,6 +65,8 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 
 ### Sửa
 
+- Gõ nhanh trong VS Code bản snap (đi qua XIM) không còn mất chữ hay ra chữ thô: bộ gõ chờ VS Code xoá
+  xong rồi mới gửi chữ mới (#PR).
 - Trên Wayland, bấm chuột sang chỗ khác trong ô rồi gõ tiếp giờ bắt đầu từ mới ngay cả khi máy chủ
   nền không chạy: bộ gõ nhận ra cú bấm qua việc con trỏ đổi chỗ mà chữ không đổi (#40).
 - Lark (Messenger web) trên Firefox gõ đúng dấu trở lại ("về" thay cho "vêf", "nấu" thay cho "nâú").

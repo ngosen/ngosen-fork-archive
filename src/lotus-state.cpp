@@ -600,8 +600,9 @@ namespace fcitx {
                 NGOSEN_INFO("Surr frozen: resume waiting");
             }
         }
-        surr_wait_pending_    = false;
-        surr_wait_timer_only_ = false;
+        surr_wait_pending_        = false;
+        surr_wait_timer_only_     = false;
+        xim_backspaces_unapplied_ = 0;
         if (!fromTimer && surr_wait_timer_) {
             surr_wait_timer_.reset(); // never reset a timer from inside its own callback
         }
@@ -796,6 +797,19 @@ namespace fcitx {
             surr_wait_deliver_at_ = deliverAtUs;
             surr_wait_timer_->rearm(deliverAtUs);
         }
+    }
+
+    // XIM clients send back the release of each forwarded backspace once they have applied it. A
+    // slow client needs longer than the fixed wait for several, so wait for the last release.
+    void LotusState::noteBackspaceApplied(const ngosen::KeyPress& keyEvent) {
+        if (xim_backspaces_unapplied_ <= 0 || !isBackspace(static_cast<KeySym>(keyEvent.sym())) || !is_deleting_.load() || !surr_wait_timer_only_) {
+            return;
+        }
+        if (--xim_backspaces_unapplied_ == 0) {
+            finishReplacement("backspaces applied", false);
+            return;
+        }
+        deferTimedCommit(ngosen::monotonicUs() + ForwardWaitUs);
     }
 
     void LotusState::surroundingUpdated() {
@@ -1049,7 +1063,8 @@ namespace fcitx {
                 // We are inside the client's synchronous XIM request for the key that triggered this
                 // replacement. Keys forwarded now reach the client before its reply, and libX11 may
                 // hand them back to us unprocessed. Forward them once the reply has gone out.
-                xim_forward_timer_ = host_->startTimer(ngosen::monotonicUs(), 0, [this, count](ngosen::Timer&) {
+                xim_backspaces_unapplied_ = count;
+                xim_forward_timer_        = host_->startTimer(ngosen::monotonicUs(), 0, [this, count](ngosen::Timer&) {
                     if (is_deleting_.load()) {
                         forwardBackspaces(count);
                     }
@@ -1381,8 +1396,10 @@ namespace fcitx {
             }
             cancelModifierTap();
         }
-        if (keyEvent.isRelease())
+        if (keyEvent.isRelease()) {
+            noteBackspaceApplied(keyEvent);
             return;
+        }
         if (const KeySym rawSym = static_cast<KeySym>(keyEvent.sym()); overtype_pending_ && (rawSym == FcitxKey_Left || rawSym == FcitxKey_Shift_L || rawSym == FcitxKey_Shift_R)) {
             // Our own Shift+Left selection: it must reach the app and must not be treated as the user
             // moving the cursor (that would discard the pending commit).

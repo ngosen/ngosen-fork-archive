@@ -10,19 +10,18 @@ Lotus nhưng đi hướng riêng. Giấy phép vẫn là GPL-3.0-or-later.
 Bản này dùng hằng ngày trên Fedora 44 và CachyOS (KDE Plasma Wayland). Kho để công khai cho ai cần thì
 lấy dùng, **không hứa hỗ trợ**. Gặp lỗi thì báo ở mục [Issues](https://github.com/ngosen/ngosen/issues).
 
-## Lộ trình: Ngó Sen 1.0
+## Roadmap: Ngó Sen 1.0
 
 Bản 1.0 nhắm bốn thay đổi lớn. Chưa có ngày phát hành.
 
 - **Bỏ máy chủ nền uinput.** Hiện bộ gõ cần một chương trình chạy ngầm có quyền đặc biệt để xoá chữ cũ.
-  Bản 1.0 không cần nó nữa: cài xong là gõ, không phải bật dịch vụ, không cần quyền thiết bị. Phần lớn
-  việc này đã xong trên nhánh `main`: KDE, GNOME, X11 và app snap đều gõ được khi tắt máy chủ; còn lại một số game.
+  Bản 1.0 không cần nó nữa: cài xong là gõ, không phải bật dịch vụ, không cần quyền thiết bị.
 - **Chỉ còn hai chế độ gõ: Gõ Sen và Preedit.** Gõ Sen là chế độ dùng cho mọi chỗ: gõ nhanh không mất
   chữ, gõ đúng trong trình duyệt, thanh địa chỉ, Facebook, app Electron như Zalo, và terminal.
   Preedit là chế độ hiện chữ gạch chân trong lúc gõ, dành cho app không hợp với Gõ Sen. Người dùng không
   còn phải chọn giữa nhiều chế độ khó hiểu.
-- **Lõi ghép dấu chuyển sang Rust.** Phần biến `tieengs` thành `tiếng` đang viết bằng Go, sẽ đổi sang
-  bản viết bằng Rust. Chỉ đổi khi bản mới gõ ra y hệt bản cũ.
+- **Lõi ghép dấu (bamboo-core) chuyển sang Rust.** Phần biến `tieengs` thành `tiếng` đang viết bằng
+  Go, sẽ đổi sang bản viết bằng Rust. Chỉ đổi khi bản mới gõ ra y hệt bản cũ.
 - **Tách lõi Ngó Sen để dùng được ở nhiều nơi.** Ngoài fcitx5, Ngó Sen sẽ có bản cho IBus (bộ gõ mặc
   định của GNOME và Ubuntu) và cho các môi trường dùng wlroots như Sway.
 

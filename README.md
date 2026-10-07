@@ -1,14 +1,9 @@
 # Ngó Sen — bộ gõ tiếng Việt cho fcitx5
 
-Người giữ dự án chỉ **vibecode** dự án này: nêu việc cho trợ lý AI viết mã, rồi đo và dùng thử hằng
-ngày.
-
-Ngó Sen tách ra từ [fcitx5-lotus](https://github.com/LotusInputMethod/fcitx5-lotus), vốn là bản fork
-của [bộ gõ VMK](https://github.com/thanhpy2009/VMK). Ngó sen là mầm mọc ra từ cây sen: cùng gốc với
-Lotus nhưng đi hướng riêng. Giấy phép vẫn là GPL-3.0-or-later.
-
-Bản này dùng hằng ngày trên Fedora 44 và CachyOS (KDE Plasma Wayland). Kho để công khai cho ai cần thì
-lấy dùng, **không hứa hỗ trợ**. Gặp lỗi thì báo ở mục [Issues](https://github.com/ngosen/ngosen/issues).
+Ngó Sen được dùng hằng ngày trên Fedora 44 và CachyOS (KDE Plasma Wayland), và được thử thêm trên máy ảo
+Ubuntu 26.04 (GNOME, Wayland), MX Linux (Xfce, X11) và Linux Mint (Cinnamon, X11). Kho để công khai cho
+ai cần thì lấy dùng, **không hứa hỗ trợ**. Gặp lỗi thì báo ở mục
+[Issues](https://github.com/ngosen/ngosen/issues).
 
 ## Roadmap: Ngó Sen 1.0
 
@@ -88,6 +83,15 @@ thì tắt extension bằng `gnome-extensions disable forward-keys@ngosen.github
 
 Cấu hình (các tệp `lotus*.conf` trong `~/.config/fcitx5/conf/`) vẫn ở lại máy, để lần cài sau dùng
 tiếp. Muốn xoá sạch thì xoá các tệp đó và chạy `sudo userdel uinput_proxy`.
+
+## Nguồn gốc
+
+Người giữ dự án chỉ **vibecode** dự án này: nêu việc cho trợ lý AI viết mã, rồi đo và dùng thử hằng
+ngày.
+
+Ngó Sen tách ra từ [fcitx5-lotus](https://github.com/LotusInputMethod/fcitx5-lotus), vốn là bản fork
+của [bộ gõ VMK](https://github.com/thanhpy2009/VMK). Ngó sen là mầm mọc ra từ cây sen: cùng gốc với
+Lotus nhưng đi hướng riêng. Giấy phép vẫn là GPL-3.0-or-later.
 
 ## English
 

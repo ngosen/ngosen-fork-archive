@@ -35,7 +35,7 @@ a careful human wrote it, and the person sending it must be able to explain ever
 - **No "lotus" in new names.** The project is Ngó Sen; a new file, class, function, constant,
   macro or environment variable uses `ngosen`/`NgoSen`/`NGOSEN_` or a plain descriptive name.
   Existing lotus names stay until a change has another reason to touch them, and calling them is
-  fine. Runtime names users already have (addon id, config files, `fcitx5-lotus-server`) change only
+  fine. Runtime names users already have (addon id, config files, mode names) change only
   together with a migration step. `misc/check-new-names.sh` enforces this in CI.
 - **Run clang-format before pushing.** CI fails on any formatting diff, including alignment of
   neighbouring declarations.

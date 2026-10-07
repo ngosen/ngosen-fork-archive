@@ -26,27 +26,6 @@ Bản 1.0 nhắm bốn thay đổi lớn. Chưa có ngày phát hành.
 - **Tách lõi Ngó Sen để dùng được ở nhiều nơi.** Ngoài fcitx5, Ngó Sen sẽ có bản cho IBus (bộ gõ mặc
   định của GNOME và Ubuntu) và cho các môi trường dùng wlroots như Sway.
 
-## Khác gì bản gốc
-
-- **Gõ nhanh, thay chữ nhanh hơn.** Bộ gõ sửa dấu nhanh hơn và không còn lặp chữ.
-- **Thanh địa chỉ trình duyệt gõ đúng.** Hết cảnh `tôi` thành `toôi`, `tiếng` thành `tiêng` khi trình
-  duyệt tự gợi ý địa chỉ.
-- **Messenger và ô soạn tin Facebook không còn mất chữ.**
-- **LibreOffice gõ đúng** (trước đây `chaof` ra `chaà`).
-- **Icon chữ V trên thanh tác vụ** hiện đúng màu trên giao diện tối của KDE và GNOME.
-- **Chỉ một chế độ uinput thay cho ba**, và bỏ chế độ Minecraft. Cấu hình cũ tự chuyển, không phải chỉnh
-  gì.
-
-Đã có trên nhánh `main`, sẽ vào bản phát hành tới:
-
-- **KDE, GNOME, X11 (Xfce, Cinnamon…) và app snap gõ được khi không có máy chủ nền.**
-- **Ubuntu 26.04:** GNOME trên bản này có lỗi làm Chrome, Edge và app Electron gõ ra `tieêngếng`. Gói
-  kèm một extension để chữa, bật một lần là xong (xem [mục Cài](#ubuntu-2604-bật-extension-sửa-lỗi-gõ)).
-- **Bấm chuột sang chỗ khác rồi gõ tiếp** không còn làm chữ mới dính vào chữ cũ.
-
-Chi tiết từng thay đổi, số đo và cách thử: [KHAC-GI-SO-VOI-BAN-GOC.md](KHAC-GI-SO-VOI-BAN-GOC.md).
-Danh sách đầy đủ theo từng bản: [CHANGELOG.md](CHANGELOG.md).
-
 ## Nên dùng chế độ nào
 
 Dùng **`Uinput`** làm chế độ gõ chính: chọn trong cửa sổ cài đặt Ngó Sen, mục chế độ mặc định. Bản 1.0
@@ -69,7 +48,7 @@ lệnh đó.
 
 Không muốn chạy lệnh tải từ mạng thì tải gói ở trang
 [Releases](https://github.com/ngosen/ngosen/releases) rồi cài bằng tay. Muốn tự dựng từ mã thì xem
-[Cài sang máy khác](KHAC-GI-SO-VOI-BAN-GOC.md#cài-sang-máy-khác).
+[TU-DUNG.md](TU-DUNG.md).
 
 **Cài xong, hoặc mỗi lần cập nhật,** khởi động lại máy chủ nền rồi khởi động lại fcitx5:
 

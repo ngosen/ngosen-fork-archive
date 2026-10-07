@@ -261,7 +261,7 @@ int main() {
     TestInstance       testInstance;
     fcitx::LotusEngine engine(&testInstance.instance);
     fcitx::RawConfig   config;
-    config.setValueByPath("Mode", "Uinput");
+    config.setValueByPath("Mode", "Sen");
     config.setValueByPath("InputMethod", "Telex");
     config.setValueByPath("WaitSurroundingEvent", "True");
     engine.setConfig(config);

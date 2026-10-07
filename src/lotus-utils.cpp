@@ -22,7 +22,7 @@
 #include <cstring>
 
 // Global variables
-std::atomic<fcitx::LotusMode> realMode{fcitx::LotusMode::Uinput};
+std::atomic<fcitx::LotusMode> realMode{fcitx::LotusMode::Sen};
 std::atomic<bool>             needEngineReset{false};
 std::atomic<bool>             g_mouse_clicked{false};
 std::atomic<bool>             is_deleting_{false};
@@ -110,7 +110,7 @@ bool isBackspace(uint32_t sym) {
 }
 
 bool isUinputMode(fcitx::LotusMode mode) {
-    return mode == fcitx::LotusMode::Uinput;
+    return mode == fcitx::LotusMode::Sen;
 }
 
 int compareAndSplitStrings(const std::string& A, const std::string& B, std::string& deletedPart, std::string& addedPart) {

@@ -59,13 +59,13 @@ int main() {
     TestInstance       testInstance;
     fcitx::LotusEngine engine(&testInstance.instance);
     fcitx::RawConfig   config;
-    config.setValueByPath("Mode", "Uinput");
+    config.setValueByPath("Mode", "Sen");
     config.setValueByPath("InputMethod", "Telex");
     config.setValueByPath("WaitSurroundingEvent", "True");
     config.setValueByPath("WaitSurroundingSettleMs", "40");
     config.setValueByPath("MessengerSelectOvertype", "True");
     engine.setConfig(config);
-    if (engine.config().mode.value() != fcitx::LotusMode::Uinput || !engine.config().waitSurroundingEvent.value()) {
+    if (engine.config().mode.value() != fcitx::LotusMode::Sen || !engine.config().waitSurroundingEvent.value()) {
         reportFailure("configure Uinput", "mode=Uinput, WaitSurroundingEvent=True", "config differs");
         return 1;
     }

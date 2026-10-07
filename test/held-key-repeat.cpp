@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     TestInstance       testInstance;
     fcitx::LotusEngine engine(&testInstance.instance);
     fcitx::RawConfig   config;
-    config.setValueByPath("Mode", "Uinput");
+    config.setValueByPath("Mode", "Sen");
     config.setValueByPath("InputMethod", "Telex");
     engine.setConfig(config);
 

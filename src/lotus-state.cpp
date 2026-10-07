@@ -1067,10 +1067,10 @@ namespace fcitx {
                 surrounding.isValid() && !surrText.empty() && surrounding.cursor() == utf8::length(surrText);
         if (!isSurrText) {
             ++expected_backspaces_;
-            // Uinput skips the autofill guard except in address bars (#190): the Url flag on Chromium,
+            // Sen skips the autofill guard except in address bars (#190): the Url flag on Chromium,
             // the autofill shape on Firefox.
             const bool isFirefoxAddressBar = stripDesktopSuffix(ic_->program()) == "firefox" && textAfterCursorLooksLikeUrl(surrounding);
-            const bool checkAutofill       = realMode != LotusMode::Uinput || ic_->capabilityFlags().test(CapabilityFlag::Url) || isFirefoxAddressBar;
+            const bool checkAutofill       = realMode != LotusMode::Sen || ic_->capabilityFlags().test(CapabilityFlag::Url) || isFirefoxAddressBar;
             if (checkAutofill) {
                 // Enable Autofill detection for all frontends (Wayland/IBus).
                 // This fixes the "toôi" duplication bug in Chromium-based search bars.
@@ -1465,7 +1465,7 @@ namespace fcitx {
 
                 break;
             }
-            default: { // Uinput, Preedit, etc.
+            default: { // Sen, Preedit, etc.
                 performReplacement(" ", ". ");
                 LOTUS_INFO("Commit: . ");
                 break;
@@ -1487,7 +1487,7 @@ namespace fcitx {
                 LOTUS_INFO("Commit: — (em-dash)");
                 break;
             }
-            default: { // Uinput, Preedit, etc.
+            default: { // Sen, Preedit, etc.
                 performReplacement("-", emDash);
                 LOTUS_INFO("Commit: — (em-dash)");
                 break;
@@ -1764,7 +1764,7 @@ namespace fcitx {
         }
 
         switch (realMode) {
-            case LotusMode::Uinput: {
+            case LotusMode::Sen: {
                 handleUinputMode(keyEvent, currentSym);
                 break;
             }
@@ -1828,7 +1828,7 @@ namespace fcitx {
                 break;
             }
             case LotusMode::SurroundingText:
-            case LotusMode::Uinput: {
+            case LotusMode::Sen: {
                 ic_->inputPanel().reset();
                 break;
             }
@@ -1860,7 +1860,7 @@ namespace fcitx {
                 break;
             }
             case LotusMode::SurroundingText:
-            case LotusMode::Uinput: {
+            case LotusMode::Sen: {
                 if (lotusEngine_) {
                     ResetEngine(lotusEngine_.handle());
                 }

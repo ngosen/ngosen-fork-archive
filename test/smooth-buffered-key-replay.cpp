@@ -48,10 +48,10 @@ int main() {
     TestInstance       testInstance;
     fcitx::LotusEngine engine(&testInstance.instance);
     fcitx::RawConfig   config;
-    config.setValueByPath("Mode", "Uinput");
+    config.setValueByPath("Mode", "Sen");
     config.setValueByPath("InputMethod", "Telex");
     engine.setConfig(config);
-    if (engine.config().mode.value() != fcitx::LotusMode::Uinput || engine.config().inputMethod.value() != "Telex") {
+    if (engine.config().mode.value() != fcitx::LotusMode::Sen || engine.config().inputMethod.value() != "Telex") {
         reportFailure("configure Uinput/Telex", "mode=Uinput, input method=Telex", "configured mode or input method differs",
                       "the replay test cannot exercise Uinput Telex behavior");
         return 1;

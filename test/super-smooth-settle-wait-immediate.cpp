@@ -53,7 +53,7 @@ int main() {
     TestInstance       testInstance;
     fcitx::LotusEngine engine(&testInstance.instance);
     fcitx::RawConfig   config;
-    config.setValueByPath("Mode", "Uinput");
+    config.setValueByPath("Mode", "Sen");
     config.setValueByPath("InputMethod", "Telex");
     config.setValueByPath("WaitSurroundingEvent", "True");
     // Covers the delete-then-commit fallback, not the default select-and-overtype path.
@@ -61,7 +61,7 @@ int main() {
     // Long enough that a stalled machine cannot let the wait expire before the "no commit" check.
     config.setValueByPath("WaitSurroundingSettleMs", "500");
     engine.setConfig(config);
-    if (engine.config().mode.value() != fcitx::LotusMode::Uinput || !engine.config().waitSurroundingEvent.value()) {
+    if (engine.config().mode.value() != fcitx::LotusMode::Sen || !engine.config().waitSurroundingEvent.value()) {
         reportFailure("configure Uinput", "mode=Uinput, WaitSurroundingEvent=True", "config differs");
         return 1;
     }

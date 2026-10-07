@@ -45,7 +45,7 @@ namespace fcitx {
     int                   modeToInt(LotusMode mode) {
         switch (mode) {
             case LotusMode::Off: return 0;
-            case LotusMode::Uinput: return 2;
+            case LotusMode::Sen: return 2;
             case LotusMode::SurroundingText: return 4;
             case LotusMode::Preedit: return 5;
             case LotusMode::Emoji: return 6;
@@ -56,11 +56,11 @@ namespace fcitx {
     LotusMode intToMode(int mode) {
         switch (mode) {
             case 0: return LotusMode::Off;
-            case 1: // former Uinput (Smooth)
+            case 1: // former Smooth
             case 2:
-            case 3: // former Uinput (Super Smooth)
+            case 3: // former Super Smooth
             case 8: // former Minecraft
-                return LotusMode::Uinput;
+                return LotusMode::Sen;
             case 4: return LotusMode::SurroundingText;
             case 5: return LotusMode::Preedit;
             case 6: return LotusMode::Emoji;
@@ -69,14 +69,13 @@ namespace fcitx {
     }
 
     namespace {
-        // The former Smooth, Slow, Super Smooth and Minecraft modes are now the single Uinput mode.
-        // Their stored names would not parse, and fcitx would silently fall back to the Preedit default.
-        bool isLegacyUinputModeName(const std::string& name) {
-            return name == "Uinput (Smooth)" || name == "Uinput (Slow)" || name == "Uinput (Super Smooth)" || name == "Minecraft";
+        // Sen was called Uinput, and before that Smooth, Slow, Super Smooth and Minecraft. Their stored
+        // names would not parse, and fcitx would silently fall back to the Preedit default.
+        bool isFormerSenModeName(const std::string& name) {
+            return name == "Uinput" || name == "Uinput (Smooth)" || name == "Uinput (Slow)" || name == "Uinput (Super Smooth)" || name == "Minecraft";
         }
 
-        // An older ModeOrder lists Smooth, Uinput, SuperSmooth and Minecraft, which all become Uinput;
-        // keeping them would show Uinput several times in the mode menu.
+        // Keeping several former names would show Sen several times in the mode menu.
         void migrateLegacyModeOrder(RawConfig& config) {
             const auto* order = config.valueByPath("ModeOrder");
             if (order == nullptr) {
@@ -84,8 +83,8 @@ namespace fcitx {
             }
             std::vector<std::string> migrated;
             for (auto name : stringutils::split(*order, ",")) {
-                if (name == "Smooth" || name == "SuperSmooth" || name == "Minecraft") {
-                    name = "Uinput";
+                if (name == "Uinput" || name == "Smooth" || name == "SuperSmooth" || name == "Minecraft") {
+                    name = "Sen";
                 }
                 if (std::find(migrated.begin(), migrated.end(), name) == migrated.end()) {
                     migrated.push_back(std::move(name));
@@ -94,11 +93,20 @@ namespace fcitx {
             config.setValueByPath("ModeOrder", stringutils::join(migrated, ","));
         }
 
+        void moveOption(RawConfig& config, const std::string& from, const std::string& to) {
+            const auto* value = config.valueByPath(from);
+            if (value != nullptr && config.valueByPath(to) == nullptr) {
+                config.setValueByPath(to, *value);
+            }
+        }
+
         void migrateLegacyMode(RawConfig& config) {
-            if (const auto* mode = config.valueByPath("Mode"); mode != nullptr && isLegacyUinputModeName(*mode)) {
-                config.setValueByPath("Mode", "Uinput");
+            if (const auto* mode = config.valueByPath("Mode"); mode != nullptr && isFormerSenModeName(*mode)) {
+                config.setValueByPath("Mode", "Sen");
             }
             migrateLegacyModeOrder(config);
+            moveOption(config, "ShowModeUinput", "ShowModeSen");
+            moveOption(config, "ShortcutUinput", "ShortcutSen");
         }
     } // namespace
 
@@ -106,7 +114,7 @@ namespace fcitx {
     // menu.  If the hotkey itself conflicts with a reserved menu key, falls back
     // to FcitxKey_f.
     static bool isAppModeMenuReservedKey(KeySym sym, const lotusConfig& config) {
-        if (sym == Key(*config.shortcutUinput).sym() || sym == Key(*config.shortcutSurroundingText).sym() || sym == Key(*config.shortcutPreedit).sym() ||
+        if (sym == Key(*config.shortcutSen).sym() || sym == Key(*config.shortcutSurroundingText).sym() || sym == Key(*config.shortcutPreedit).sym() ||
             sym == Key(*config.shortcutEmoji).sym() || sym == Key(*config.shortcutOff).sym() || sym == Key(*config.shortcutDefault).sym()) {
             return true;
         }
@@ -697,7 +705,7 @@ namespace fcitx {
             LotusMode                                 realMode = getAppRule(appName);
 
             auto                                      order      = stringutils::split(*config_.modeOrder, ",");
-            std::vector<std::pair<std::string, bool>> visibility = {{"Uinput", *config_.showModeUinput},   {"SurroundingText", *config_.showModeSurroundingText},
+            std::vector<std::pair<std::string, bool>> visibility = {{"Sen", *config_.showModeSen},         {"SurroundingText", *config_.showModeSurroundingText},
                                                                     {"Preedit", *config_.showModePreedit}, {"Emoji", *config_.showModeEmoji},
                                                                     {"Off", *config_.showModeOff},         {"Default", *config_.showModeDefault}};
 
@@ -712,8 +720,8 @@ namespace fcitx {
                 }
                 if (visible) {
                     std::optional<LotusMode> mode = std::nullopt;
-                    if (name == "Uinput")
-                        mode = LotusMode::Uinput;
+                    if (name == "Sen")
+                        mode = LotusMode::Sen;
                     else if (name == "SurroundingText")
                         mode = LotusMode::SurroundingText;
                     else if (name == "Preedit")
@@ -931,7 +939,7 @@ namespace fcitx {
             return;
 
         file << "# Ngó Sen Per-App Configuration\n";
-        file << "# 0 = Off, 2 = Uinput (1, 3 and 8 are read as Uinput too), 4 = Surrounding Text, 5 = Preedit, 6 = Emoji Picker\n";
+        file << "# 0 = Off, 2 = Sen (1, 3 and 8 are read as Sen too), 4 = Surrounding Text, 5 = Preedit, 6 = Emoji Picker\n";
         std::lock_guard<std::mutex> lock(appRulesMutex_);
         for (const auto& pair : appRules_) {
             bool currentIsCtx = isStartsWith(pair.first, "ctx_");
@@ -1044,7 +1052,7 @@ namespace fcitx {
         auto                                      getShortcut = [](const std::string& shortcut) { return Key(shortcut).sym(); };
 
         std::unordered_map<std::string, ModeInfo> modeMap = {
-            {"Uinput", {LotusMode::Uinput, _("Uinput"), getShortcut(*config_.shortcutUinput), *config_.showModeUinput}},
+            {"Sen", {LotusMode::Sen, _("Sen"), getShortcut(*config_.shortcutSen), *config_.showModeSen}},
             {"SurroundingText", {LotusMode::SurroundingText, _("Surrounding Text"), getShortcut(*config_.shortcutSurroundingText), *config_.showModeSurroundingText}},
             {"Preedit", {LotusMode::Preedit, _("Preedit"), getShortcut(*config_.shortcutPreedit), *config_.showModePreedit}},
             {"Emoji", {LotusMode::Emoji, _("Emoji Picker"), getShortcut(*config_.shortcutEmoji), *config_.showModeEmoji}},
@@ -1149,7 +1157,7 @@ namespace fcitx {
         // Map mode to label
         std::string modeLabel;
         switch (mode) {
-            case LotusMode::Uinput: modeLabel = _("Uinput"); break;
+            case LotusMode::Sen: modeLabel = _("Sen"); break;
             case LotusMode::SurroundingText: modeLabel = _("Surrounding Text"); break;
             case LotusMode::Preedit: modeLabel = _("Preedit"); break;
             case LotusMode::Emoji: modeLabel = _("Emoji Picker"); break;

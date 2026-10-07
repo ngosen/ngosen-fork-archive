@@ -133,6 +133,15 @@ namespace {
             return key(context, fcitx::Key(FcitxKey_e), false, true);
         }
 
+        // Chromium on X11 drops and regains focus right after our selection keys.
+        void bounceFocus(TestInputContext& context) {
+            fcitx::InputContextEvent out(&context, fcitx::EventType::InputContextFocusOut);
+            engine.reset(entry, out);
+            engine.deactivate(entry, out);
+            fcitx::InputContextEvent in(&context, fcitx::EventType::InputContextFocusIn);
+            engine.activate(entry, in);
+        }
+
         template <typename Done>
         uint64_t pumpUntil(Done done, uint64_t deadlineUs) {
             while (!done() && nowUs() < deadlineUs)
@@ -143,8 +152,8 @@ namespace {
 
     // The Chromium address bar selects an inline autocompletion after the typed text, so a BackSpace
     // would only remove that. Widening the selection with Shift+Left and typing over it replaces both.
-    bool chromiumSelectsAndOvertypes(Harness& h, const std::string& program, const std::string& frontend, fcitx::CapabilityFlags caps) {
-        const std::string where   = frontend + " " + program + ": ";
+    bool chromiumSelectsAndOvertypes(Harness& h, const std::string& program, const std::string& frontend, fcitx::CapabilityFlags caps, bool bounceFocus = false) {
+        const std::string where   = frontend + " " + program + (bounceFocus ? " with focus bounce" : "") + ": ";
         const int         before  = h.server.requests();
         auto              context = h.open(program, frontend, caps);
         if (!h.typeTieE(*context))
@@ -168,7 +177,9 @@ namespace {
         }
         if (!h.key(*context, fcitx::Key(FcitxKey_Shift_R, fcitx::KeyStates(fcitx::KeyState::Shift)), true, false))
             return false;
-        const uint64_t releasedAt  = nowUs();
+        const uint64_t releasedAt = nowUs();
+        if (bounceFocus)
+            h.bounceFocus(*context);
         const uint64_t committedAt = h.pumpUntil([&] { return !context->commits().empty(); }, releasedAt + 500000);
         if (context->commits() != std::vector<std::string>{"ê"}) {
             reportFailure(where + "type ê over the selection", "['ê']", joinCommits(*context));
@@ -263,6 +274,8 @@ int main() {
 
     const auto              chromeCaps = fcitx::CapabilityFlags{fcitx::CapabilityFlag::Preedit, fcitx::CapabilityFlag::FormattedPreedit, fcitx::CapabilityFlag::KeyEventOrderFix};
     if (!chromiumSelectsAndOvertypes(h, "microsoft-edge", "dbus", chromeCaps))
+        return 1;
+    if (!chromiumSelectsAndOvertypes(h, "microsoft-edge", "dbus", chromeCaps, true))
         return 1;
     if (!chromiumSelectsAndOvertypes(h, "chromium", "fcitx4", fcitx::CapabilityFlags{fcitx::CapabilityFlag::Preedit, fcitx::CapabilityFlag::FormattedPreedit}))
         return 1;

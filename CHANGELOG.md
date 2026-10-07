@@ -39,6 +39,9 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 
 - Trên Wayland, bấm chuột sang chỗ khác trong ô rồi gõ tiếp giờ bắt đầu từ mới ngay cả khi máy chủ
   nền không chạy: bộ gõ nhận ra cú bấm qua việc con trỏ đổi chỗ mà chữ không đổi (#40).
+- Ubuntu 26.04 (GNOME 50.0 tới 50.3): gói kèm extension `forward-keys@ngosen.github.io` sửa lỗi GNOME làm
+  rơi phím xoá bộ gõ gửi qua GNOME Shell, khiến Chrome, Edge và app Electron chạy Wayland gõ ra
+  `tieêngếng`. Bật bằng `gnome-extensions enable forward-keys@ngosen.github.io` (#41).
 - Trên KDE Plasma (Wayland), bộ gõ tự gửi phím xoá cho ứng dụng thay vì nhờ máy chủ uinput, rồi chờ ứng
   dụng báo đã xoá xong mới gõ chữ mới. Ứng dụng X11 chạy qua XWayland không còn bị kẹt, nuốt hết phím
   sau một lần thay chữ. Ô soạn tin Facebook trên KDE xoá rồi gõ lại như ô thường, không bôi đen rồi gõ
@@ -55,6 +58,8 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
   gợi ý. Ngó Sen nay bôi đen cả chữ cũ bằng Shift+Mũi tên trái qua XTEST rồi gõ đè. Các app khác trên X11
   cũng xoá qua XTEST khi không gửi phím hộ được, không cần máy chủ uinput. Gói nay kéo theo thư viện
   `libxcb-xtest`, vì Linux Mint không cài sẵn nó (#38).
+- Trên X11, bấm chuột sang chỗ khác giữa lúc gõ không còn làm từ mới dính vào từ cũ khi máy chủ uinput
+  không chạy: Ngó Sen nghe cú bấm chuột qua XInput2 của X server. Gói kéo theo thư viện `libxcb-xinput` (#39).
 
 ### Tài liệu
 

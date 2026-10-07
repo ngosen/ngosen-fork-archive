@@ -80,6 +80,8 @@ add_lotus_headless_test(ibus_dbus_forward_backspaces
     ibus-dbus-forward-backspaces.cpp "integration;smooth")
 add_lotus_headless_test(cursor_jump_reset
     cursor-jump-reset.cpp "integration;surrounding")
+add_lotus_headless_test(x11_pointer_click
+    x11-pointer-click.cpp "unit;x11")
 add_lotus_headless_test(x11_xtest_replacement
     x11-xtest-replacement.cpp "integration;smooth")
 add_lotus_headless_test(super_smooth_settle_wait_immediate

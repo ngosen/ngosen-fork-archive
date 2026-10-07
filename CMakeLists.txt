@@ -13,6 +13,7 @@ set(fcitx_lotus_core_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/src/lotus-candidates.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/lotus-utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ngosen-xtest.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ngosen-pointer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/lotus-monitor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/lotus-icon-resolver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/lotus-plasma-theme.cpp
@@ -72,6 +73,9 @@ fcitx5_translate_desktop_file(
 )
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/org.fcitx.Fcitx5.Addon.Lotus.metainfo.xml" DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
+
+# GNOME 50.0-50.3 drop keys an input method forwards; the user enables this extension there.
+install(DIRECTORY gnome-shell/forward-keys@ngosen.github.io DESTINATION ${CMAKE_INSTALL_DATADIR}/gnome-shell/extensions)
 
 install(FILES 
         LICENSES/GPL-3.0-or-later.txt

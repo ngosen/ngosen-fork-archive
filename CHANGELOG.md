@@ -51,7 +51,8 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 - Trên X11, thanh địa chỉ Chrome, Edge và Chromium không còn giữ dấu cũ khi gõ một địa chỉ đã từng vào
   ("tiêng" thay cho "tiếng"). Trình duyệt tự gợi ý phần đuôi và bôi đen nó, nên phím xoá đầu chỉ xoá phần
   gợi ý. Ngó Sen nay bôi đen cả chữ cũ bằng Shift+Mũi tên trái qua XTEST rồi gõ đè. Các app khác trên X11
-  cũng xoá qua XTEST khi không gửi phím hộ được, không cần máy chủ uinput (#38).
+  cũng xoá qua XTEST khi không gửi phím hộ được, không cần máy chủ uinput. Gói nay kéo theo thư viện
+  `libxcb-xtest`, vì Linux Mint không cài sẵn nó (#38).
 
 ### Tài liệu
 

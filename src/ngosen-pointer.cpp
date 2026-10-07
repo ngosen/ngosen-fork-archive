@@ -81,7 +81,8 @@ namespace {
         }
         const uint8_t* ext = extData(conn, inputId);
         // xcb_query_extension_reply_t: present at byte 8, major_opcode at byte 9.
-        uint8_t* version = (ext != nullptr && ext[8] != 0) ? versionReply(conn, queryVersion(conn, 2, 0), nullptr) : nullptr;
+        // From 2.1 on, raw events arrive even while another client grabs the pointer, as Chromium does on press.
+        uint8_t* version = (ext != nullptr && ext[8] != 0) ? versionReply(conn, queryVersion(conn, 2, 2), nullptr) : nullptr;
         // xcb_input_xi_query_version_reply_t: major_version at byte 8.
         uint16_t major = 0;
         if (version != nullptr)

@@ -14,7 +14,7 @@ Gói có thêm "epoch" 1 để trình quản lý gói vẫn coi `0.5.0` mới h�
 ### Sửa
 
 - Chế độ Gõ Sen gõ được trên Sway, Hyprland và các WM dùng input-method-v2. Trước đây chữ đầu tiên cần
-  thêm dấu làm bộ gõ kẹt, mọi phím sau đó không ra chữ (#PR).
+  thêm dấu làm bộ gõ kẹt, mọi phím sau đó không ra chữ (#73).
 
 ## [0.5.0-1] — 08/10/2026
 

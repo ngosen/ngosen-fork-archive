@@ -11,7 +11,7 @@
 
 [package]
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.88"
 name = "bamboo-core"
 version = "0.3.25"
 build = false
@@ -68,6 +68,10 @@ name = "backspace_after_undo"
 path = "tests/backspace_after_undo.rs"
 
 [[test]]
+name = "backspace_keeps_tone_target"
+path = "tests/backspace_keeps_tone_target.rs"
+
+[[test]]
 name = "bamboo_engine_integration"
 path = "tests/bamboo_engine_integration.rs"
 
@@ -78,6 +82,10 @@ path = "tests/bracket_transform.rs"
 [[test]]
 name = "comprehensive_typing"
 path = "tests/comprehensive_typing.rs"
+
+[[test]]
+name = "custom_input_method"
+path = "tests/custom_input_method.rs"
 
 [[test]]
 name = "free_onset_spelling"
@@ -114,6 +122,10 @@ path = "tests/skey_parity.rs"
 [[test]]
 name = "skey_repo_tests"
 path = "tests/skey_repo_tests.rs"
+
+[[test]]
+name = "tone_on_invalid_word"
+path = "tests/tone_on_invalid_word.rs"
 
 [[test]]
 name = "undo_keeps_tone"

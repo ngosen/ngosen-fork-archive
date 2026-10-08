@@ -226,7 +226,6 @@ fn unknown_input_method_types_keys_as_is() {
 }
 
 #[test]
-#[ignore = "needs InputMethod::from_definition"]
 fn custom_engine_uses_its_definition() {
     let table = new_macro_table(&[]);
     let keys: Vec<CString> = ["q", "DauSac", "a", "A_Â"]

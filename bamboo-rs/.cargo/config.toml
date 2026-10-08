@@ -1,9 +1,9 @@
 [source.crates-io]
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/ngosen/bamboo_core?rev=736d4fe9f2432fd03c2a7ada71f565a3d37d907f"]
+[source."git+https://github.com/ngosen/bamboo_core?rev=e8ebe4a818d82611a6e69fd0eba22c75b26d831f"]
 git = "https://github.com/ngosen/bamboo_core"
-rev = "736d4fe9f2432fd03c2a7ada71f565a3d37d907f"
+rev = "e8ebe4a818d82611a6e69fd0eba22c75b26d831f"
 replace-with = "vendored-sources"
 
 [source.vendored-sources]

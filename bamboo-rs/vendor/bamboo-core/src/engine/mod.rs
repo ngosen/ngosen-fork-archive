@@ -395,13 +395,13 @@ impl Engine {
                 first.result = vowel;
                 first.effect_on = vowel;
             }
-            if lower_key == 'w' && self.w2u_applies(composition.as_slice()) {
-                if let Some(first) = trans_buf.as_mut_slice().first_mut() {
-                    if first.result == 'w' {
-                        first.result = 'ư';
-                        first.effect_on = 'ư';
-                    }
-                }
+            if lower_key == 'w'
+                && self.w2u_applies(composition.as_slice())
+                && let Some(first) = trans_buf.as_mut_slice().first_mut()
+                && first.result == 'w'
+            {
+                first.result = 'ư';
+                first.effect_on = 'ư';
             }
         }
 
@@ -452,33 +452,6 @@ impl Engine {
         }
     }
 
-    fn last_syllable_start(composition: &[Transformation]) -> usize {
-        let mut idx = composition.len();
-        let mut found_vowel = false;
-        let mut onset_count = 0;
-
-        while idx > 0 {
-            let tmp = &composition[idx - 1];
-            if !tmp.has_target() {
-                let is_v = crate::phonetics::is_vowel(tmp.result);
-                if is_v {
-                    if found_vowel && onset_count > 0 {
-                        break;
-                    }
-                    found_vowel = true;
-                } else if found_vowel {
-                    onset_count += 1;
-                    if onset_count > 3 {
-                        break;
-                    }
-                }
-            }
-            idx -= 1;
-        }
-
-        idx
-    }
-
     fn new_composition_in_place(
         &self,
         composition: &mut TransformationStack,
@@ -486,7 +459,7 @@ impl Engine {
         key: char,
         is_upper_case: bool,
     ) -> bool {
-        let syllable_abs_start = Self::last_syllable_start(composition.as_slice());
+        let syllable_abs_start = crate::syllable::last_syllable_start(composition.as_slice());
 
         composition.drain_to(syllable_abs_start, scratch);
 
@@ -982,6 +955,12 @@ impl Engine {
         self.is_valid_internal(self.active_slice(), input_is_full_complete)
     }
 
+    // Like Go's RemoveLastChar: an invalid word keeps its tone where it was
+    // typed, so deleting a key brings back the text shown before that key.
+    fn may_move_tone(&self) -> bool {
+        self.config.free_tone_marking && self.active_len > 0 && self.is_valid(false)
+    }
+
     fn is_valid_internal(
         &self,
         composition: &[Transformation],
@@ -999,7 +978,7 @@ impl Engine {
         let restore_mark: RestoreMark = restore_mark.into();
         let refresh_last_tone_target = matches!(restore_mark, RestoreMark::Yes);
 
-        if refresh_last_tone_target && self.active_len > 0 {
+        if refresh_last_tone_target && self.may_move_tone() {
             crate::syllable::refresh_last_tone_target_into(
                 &mut self.active_buffer[..self.active_len],
                 self.config.std_tone_style,
@@ -1044,7 +1023,7 @@ impl Engine {
         // Detach only with non-empty residue: state 0 soundly identifies empty.
         self.dfa_detached = self.active_len > 0;
 
-        if self.active_len > 0 {
+        if self.may_move_tone() {
             crate::syllable::refresh_last_tone_target_into(
                 &mut self.active_buffer[..self.active_len],
                 self.config.std_tone_style,

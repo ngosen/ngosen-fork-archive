@@ -15,7 +15,7 @@ use std::os::fd::FromRawFd;
 use std::sync::Arc;
 
 use bamboo_core::advanced::get_charset_names;
-use bamboo_core::{BracketMode, Config, W2uMode};
+use bamboo_core::{BracketMode, Config, InputMethod, W2uMode};
 
 use crate::engine::{BambooEngine, Dictionary, INPUT_METHOD_NAMES, input_method_by_name};
 use crate::handles::{self, Object};
@@ -216,19 +216,19 @@ pub unsafe extern "C" fn NewEngine(
     new_engine_handle(make, dict_handle, table_handle)
 }
 
-/// Builds a Telex engine for now: `bamboo-core` cannot yet build an input method from a
-/// key-to-rule definition, so `definition` is not used.
-///
 /// # Safety
 /// `definition` is null or a null-terminated array of key, rule strings.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn NewCustomEngine(
-    _definition: *const *const c_char,
+    definition: *const *const c_char,
     dict_handle: usize,
     table_handle: usize,
 ) -> usize {
+    // SAFETY: the caller passes a valid array or null.
+    let pairs = unsafe { read_pairs(definition) };
     let make = |dict, table| {
-        let mut engine = BambooEngine::new(input_method_by_name("Telex"), dict, table);
+        let im = InputMethod::from_definition("Custom", &pairs);
+        let mut engine = BambooEngine::new(im, dict, table);
         engine.spell_check_with_dicts = false;
         engine
     };

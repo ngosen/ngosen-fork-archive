@@ -187,6 +187,10 @@ namespace fcitx {
         unsigned int unreportedCommitLength_ = 0;
         uint64_t     lastInputAtUs_          = 0; ///< last key or commit, CLOCK_MONOTONIC us
 
+        // Last key press seen, to spot one the app sends twice.
+        uint32_t lastPressCode_ = 0;
+        uint32_t lastPressTime_ = 0;
+
         // --- Select and overtype (Facebook composers) ---
         // Select with Shift+Left, wait for the snapshot to show the selection, then commit over it.
         // The field never becomes empty, so Messenger does not reload its placeholder.

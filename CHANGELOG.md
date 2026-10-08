@@ -19,7 +19,7 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
   mẫu tương ứng ở mục Issues của kho `ngosen/ngosen` (#31).
 - Công cụ `misc/core-compare` gõ cùng một bộ phím vào lõi ghép dấu hiện tại (Go) và bản Rust
   `bamboo-core`, rồi chỉ ra chỗ hai bên ra chữ khác nhau. Chỉ dùng khi phát triển, không đi kèm bộ gõ
-  (#PR).
+  (#68).
 
 ### Thay đổi
 

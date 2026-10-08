@@ -1383,6 +1383,15 @@ namespace fcitx {
         }
         if (keyEvent.isRelease())
             return;
+        // An XIM client sometimes sends a key we let through back to us instead of typing it. Let it
+        // through again rather than type it twice.
+        if (keyEvent.time() != 0 && keyEvent.time() == lastPressTime_ && keyEvent.code() == lastPressCode_) {
+            NGOSEN_INFO("App sent a key back: " + keyEvent.name());
+            keyEvent.passToApp();
+            return;
+        }
+        lastPressCode_ = keyEvent.code();
+        lastPressTime_ = keyEvent.time();
         if (const KeySym rawSym = static_cast<KeySym>(keyEvent.sym()); overtype_pending_ && (rawSym == FcitxKey_Left || rawSym == FcitxKey_Shift_L || rawSym == FcitxKey_Shift_R)) {
             // Our own Shift+Left selection: it must reach the app and must not be treated as the user
             // moving the cursor (that would discard the pending commit).

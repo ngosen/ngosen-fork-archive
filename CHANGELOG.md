@@ -29,7 +29,7 @@ Sửa lỗi Gõ Sen trên Sway và Hyprland, và cài mới thì dùng Gõ Sen l
 ### Tài liệu
 
 - README mở đầu bằng những điểm chính của Ngó Sen và roadmap tới bản IBus và bản cho wlroots không cần
-  fcitx5 (#75). README gọi máy chủ cũ là uinput server, như trên website (#PR).
+  fcitx5 (#75). README gọi máy chủ cũ là uinput server, như trên website (#76).
 
 ## [0.5.0-1] — 08/10/2026
 

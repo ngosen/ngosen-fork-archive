@@ -55,7 +55,7 @@ fcitx5 -rd
 
 ### Ubuntu 26.04: bật extension sửa lỗi gõ
 
-Có từ bản phát hành sau `3.5.10-4`. Cài xong, đăng xuất rồi đăng nhập lại, sau đó chạy một lần:
+Có từ bản `0.5.0-1`. Cài xong, đăng xuất rồi đăng nhập lại, sau đó chạy một lần:
 
 ```
 gnome-extensions enable forward-keys@ngosen.github.io

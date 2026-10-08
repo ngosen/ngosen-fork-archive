@@ -47,7 +47,7 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
   hàm xử lý chữ đã dời sang tệp riêng; dòng "Trang 1/2" của bảng emoji nhờ lớp trung gian dịch. Người
   dùng không thấy gì khác (#65).
 - Phần gõ dời vào thư mục `src/core/` và được dựng thành thư viện riêng không nối với fcitx5; lỡ dùng
-  tệp của fcitx5 ở đó thì bản dựng báo lỗi ngay. Người dùng không thấy gì khác (#PR).
+  tệp của fcitx5 ở đó thì bản dựng báo lỗi ngay. Người dùng không thấy gì khác (#66).
 - Chế độ `Uinput` đổi tên thành **Gõ Sen** (`Mode=Sen` trong `lotus.conf`). Cấu hình cũ, thứ tự chế độ,
   phím tắt và tuỳ chọn ẩn/hiện của chế độ cũ tự chuyển sang tên mới (#43).
 - Nhánh chính đổi tên từ `ban-dung` thành `main`. Đường dẫn cũ trên GitHub tự chuyển sang tên mới. Ai

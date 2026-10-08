@@ -42,7 +42,7 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 - Phần gõ dùng tên phím riêng thay cho tên phím của fcitx5; lúc dựng, máy tự so từng phím với số của
   fcitx5. Người dùng không thấy gì khác (#63).
 - Phần gõ của mỗi ô nhập không còn là một kiểu dữ liệu của fcitx5; fcitx5 chỉ giữ nó trong một lớp vỏ
-  mỏng. Người dùng không thấy gì khác (#PR).
+  mỏng. Người dùng không thấy gì khác (#64).
 - Chế độ `Uinput` đổi tên thành **Gõ Sen** (`Mode=Sen` trong `lotus.conf`). Cấu hình cũ, thứ tự chế độ,
   phím tắt và tuỳ chọn ẩn/hiện của chế độ cũ tự chuyển sang tên mới (#43).
 - Nhánh chính đổi tên từ `ban-dung` thành `main`. Đường dẫn cũ trên GitHub tự chuyển sang tên mới. Ai

@@ -19,7 +19,7 @@ Gói có thêm "epoch" 1 để trình quản lý gói vẫn coi `0.5.0` mới h�
 ### Tài liệu
 
 - Thêm `RELEASING.md`: những chỗ cần cập nhật sau mỗi PR và mỗi lần ra bản mới; mẫu PR nay đúng với
-  fork (nhánh `main`, `ctest`, dòng CHANGELOG) (#PR).
+  fork (nhánh `main`, `ctest`, dòng CHANGELOG) (#80).
 
 ## [0.5.1-1] — 09/10/2026
 

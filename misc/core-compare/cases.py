@@ -135,7 +135,9 @@ def main():
         for _ in range(args.random // 8):
             length = rng.randint(1, 12)
             keys = "".join(
-                rng.choice(letters + extra + "<") if rng.random() > 0.1 else rng.choice(letters).upper()
+                rng.choice(letters + extra + "<")
+                if rng.random() > 0.1
+                else rng.choice(letters).upper()
                 for _ in range(length)
             )
             emit("random", *cfg, keys)

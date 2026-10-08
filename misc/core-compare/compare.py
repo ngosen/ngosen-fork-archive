@@ -73,7 +73,7 @@ def main():
             diff_out.write(f"{level}\t{line}\n")
 
     levels = ("final", "midword", "internal")
-    sums = {lv: sum(n for (k, l), n in differ.items() if l == lv) for lv in levels}
+    sums = {lv: sum(n for (_, level), n in differ.items() if level == lv) for lv in levels}
     print(f"cases: {sum(total.values())}, " + ", ".join(f"{lv}: {n}" for lv, n in sums.items()))
     print()
     print("final = the committed word differs; midword = only the preedit while typing differs;")

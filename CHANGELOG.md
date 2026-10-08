@@ -14,7 +14,7 @@ Gói có thêm "epoch" 1 để trình quản lý gói vẫn coi `0.5.0` mới h�
 ### Thay đổi
 
 - Cài mới thì chế độ mặc định là Gõ Sen thay cho Preedit, khớp với cửa sổ cài đặt. Ai đã chọn chế độ thì
-  giữ nguyên (#PR).
+  giữ nguyên (#74).
 
 ### Sửa
 

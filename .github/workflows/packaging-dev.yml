@@ -55,7 +55,7 @@ jobs:
         uses: jtdor/build-deb-action@473136f14a42a231124c1f7cefaedfe941203c38 # v1.9.1
         with:
           docker-image: ${{ matrix.distro }}
-          apt-opts: ${{ matrix.rust && '-P pkg.ngosen.rust' || '' }}
+          apt-opts: ${{ matrix.rust && '-o APT::Build-Profiles=pkg.ngosen.rust' || '' }}
           buildpackage-opts: >-
             --build=binary --no-sign ${{ matrix.rust && '--build-profiles=pkg.ngosen.rust' || '' }}
 

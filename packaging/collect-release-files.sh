@@ -31,10 +31,7 @@ done
 rpm=$(only "$src/rpm-opensuse-tumbleweed" 'fcitx5-ngosen-[0-9]*.x86_64.rpm')
 cp "$rpm" "$out/$(basename "$rpm" .x86_64.rpm).opensuse-tumbleweed.x86_64.rpm"
 
-# makepkg puts the epoch in the name (fcitx5-ngosen-1:0.5.0-1-…); GitHub rewrites the colon, which would
-# break SHA256SUMS, so the published name leaves it out. pacman reads the epoch from inside the package.
-pkg=$(only "$src/arch-pkg" 'fcitx5-ngosen-[0-9]*-x86_64.pkg.tar.zst')
-cp "$pkg" "$out/$(basename "$pkg" | sed 's/^fcitx5-ngosen-[0-9]*:/fcitx5-ngosen-/')"
+cp "$(only "$src/arch-pkg" 'fcitx5-ngosen-[0-9]*-x86_64.pkg.tar.zst')" "$out/"
 
 # Written outside the directory first, so a rerun never lists the checksum file in itself.
 sums=$(mktemp)

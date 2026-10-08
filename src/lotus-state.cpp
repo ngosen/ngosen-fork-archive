@@ -37,6 +37,9 @@ namespace fcitx {
     constexpr uint64_t XTestSelectSettleUs = 50000;
     // Gives up on a selection whose Shift release never comes back.
     constexpr uint64_t XTestSelectTimeoutUs = 500000;
+    // Some apps move the caret back and forth for a few ms after a key (VS Code's EditContext on
+    // Wayland). Nobody clicks that soon after typing, so such moves are not clicks.
+    constexpr uint64_t CaretSettleUs = 30000;
 
     static inline bool isWordBreak(uint32_t ucs4) {
         // Space, tab, newline, carriage return, null, or punctuation/symbols (: ; < = > ? @)
@@ -863,7 +866,8 @@ namespace fcitx {
         // Firefox repeats the old state before the echo, so only a change ends the wait.
         if (jumped || !sameText)
             unreportedCommitLength_ = 0;
-        jumped                 = jumped && !echo;
+        const bool settling    = ngosen::monotonicUs() - lastInputAtUs_ < CaretSettleUs;
+        jumped                 = jumped && !echo && !settling;
         lastSurroundingText_   = s.text();
         lastSurroundingCursor_ = s.cursor();
         lastSurroundingAnchor_ = s.anchor();
@@ -878,6 +882,7 @@ namespace fcitx {
 
     void LotusState::noteCommit(const std::string& text) {
         unreportedCommitLength_ += ngosen::utf8::length(text);
+        lastInputAtUs_ = ngosen::monotonicUs();
     }
 
     void LotusState::sendSelectKeys(int charCount) const {
@@ -1383,6 +1388,7 @@ namespace fcitx {
         }
         if (keyEvent.isRelease())
             return;
+        lastInputAtUs_ = ngosen::monotonicUs();
         if (const KeySym rawSym = static_cast<KeySym>(keyEvent.sym()); overtype_pending_ && (rawSym == FcitxKey_Left || rawSym == FcitxKey_Shift_L || rawSym == FcitxKey_Shift_R)) {
             // Our own Shift+Left selection: it must reach the app and must not be treated as the user
             // moving the cursor (that would discard the pending commit).

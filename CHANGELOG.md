@@ -65,6 +65,8 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
 
 ### Sửa
 
+- VS Code bản Flatpak trên Wayland gõ được tiếng Việt: bộ gõ không còn coi việc VS Code nhích con trỏ ngay
+  sau mỗi phím là một cú bấm chuột (#PR).
 - Trên Wayland, bấm chuột sang chỗ khác trong ô rồi gõ tiếp giờ bắt đầu từ mới ngay cả khi máy chủ
   nền không chạy: bộ gõ nhận ra cú bấm qua việc con trỏ đổi chỗ mà chữ không đổi (#40).
 - Lark (Messenger web) trên Firefox gõ đúng dấu trở lại ("về" thay cho "vêf", "nấu" thay cho "nâú").

@@ -37,7 +37,8 @@ jobs:
         run: misc/check-new-names.sh origin/main
 
   check:
-    name: Build and test
+    # The Go builds keep the names that branch protection requires.
+    name: Build and test (${{ matrix.compiler }}${{ matrix.core == 'rust' && ', rust core' || '' }})
     runs-on: ubuntu-latest
     container: archlinux:latest
 

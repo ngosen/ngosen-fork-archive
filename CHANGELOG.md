@@ -55,8 +55,8 @@ sau dấu gạch là lần đóng gói của fork. Mỗi bản phát hành mang 
   chữ cũ, gõ tắt. Thân các hàm giữ nguyên. Người dùng không thấy gì khác (#67).
 - Thêm lõi ghép dấu viết bằng Rust (thư viện `bamboo-core`), chưa bật: bản dựng vẫn dùng lõi Go. Muốn
   thử thì dựng với `-DNGOSEN_RUST_CORE=ON` (cần Rust 1.88+, không cần mạng vì thư viện phụ thuộc nằm sẵn
-  trong `bamboo-rs/vendor`). Lõi Rust chưa có bảng phím tự đặt (chế độ Custom). Người dùng không thấy gì
-  khác (#69).
+  trong `bamboo-rs/vendor`). Người dùng không thấy gì khác
+  (#69).
 - Chế độ `Uinput` đổi tên thành **Gõ Sen** (`Mode=Sen` trong `lotus.conf`). Cấu hình cũ, thứ tự chế độ,
   phím tắt và tuỳ chọn ẩn/hiện của chế độ cũ tự chuyển sang tên mới (#43).
 - Nhánh chính đổi tên từ `ban-dung` thành `main`. Đường dẫn cũ trên GitHub tự chuyển sang tên mới. Ai

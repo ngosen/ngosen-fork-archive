@@ -18,6 +18,12 @@ Gói có thêm "epoch" 1 để trình quản lý gói vẫn coi `0.5.0` mới h�
   `~/.local/state/ngosen/`, để gửi kèm khi báo lỗi. Nhật ký chỉ nằm trong bộ nhớ cho tới lúc lưu, và
   không ghi gì gõ trong ô mật khẩu (#93).
 
+### Kiểm thử
+
+- Test gõ ngẫu nhiên kiểu Gõ Sen vào các app giả có tật như app thật: báo chữ chậm, báo chữ cũ, không báo,
+  nhận phím chậm. Chữ cuối cùng trong app phải giống hệt chữ Telex của các phím đã gõ. `core_replay` chạy
+  lại một file nhật ký gõ trên app giả để tìm lỗi người dùng gửi về (#94).
+
 ## [1.0.0-1] — 09/10/2026
 
 Bản 1.0: Ngó Sen chỉ làm cho fcitx5. Click sang ô khác rồi gõ nay ra đúng trong LibreOffice Calc, WPS Office

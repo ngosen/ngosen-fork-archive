@@ -23,7 +23,7 @@ Gói có thêm "epoch" 1 để trình quản lý gói vẫn coi `0.5.0` mới h�
   không thành tiếng Việt (vd. `afoc`, `ieengs`). Nay mỗi ô mới bắt đầu một chữ mới (#86).
 - LibreOffice Calc trên Wayland: click chuột sang ô khác rồi gõ, sau chữ có dấu thì bộ gõ xoá nhầm và mở
   hộp thoại "Delete Contents", từ đó không gõ được tiếng Việt nữa. Nay phím đầu ở ô mới bắt đầu một chữ
-  mới (#PR).
+  mới (#87).
 
 ### Thay đổi
 

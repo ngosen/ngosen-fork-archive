@@ -306,6 +306,14 @@ namespace ngosen {
     }
 
     void TypingState::keyEvent(ngosen::KeyPress& keyEvent) {
+        handleKey(keyEvent);
+        // A report with the cursor at the end of the text tells how long the text is.
+        const ngosen::Surrounding s = host_->surrounding();
+        if (ngosen::utf8::length(s.text()) == s.cursor())
+            realtextLen.store(s.cursor(), std::memory_order_release);
+    }
+
+    void TypingState::handleKey(ngosen::KeyPress& keyEvent) {
         recordKey(keyEvent);
         if (!bambooEngine_ || skipsKey(keyEvent))
             return;

@@ -96,10 +96,6 @@ namespace ngosen::test {
             else if (const auto text = keyText(down.appSym()); !text.empty())
                 later(quirks_.lagMs, [this, text] { insert(utf8::decode(text)); });
         }
-        // What LotusEngine::keyEvent does after the typing logic: trust a report with the cursor at the end.
-        const Surrounding s = surrounding();
-        if (s.isValid() && utf8::length(s.text()) == s.cursor())
-            realtextLen.store(s.cursor(), std::memory_order_release);
 
         FakeKey up(sym, true);
         state_->keyEvent(up);

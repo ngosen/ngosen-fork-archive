@@ -644,12 +644,6 @@ namespace fcitx {
         auto*                 state = stateFor(keyEvent.inputContext());
         ngosen::FcitxKeyPress press(keyEvent);
         state->keyEvent(press);
-        const auto&  s       = ic->surroundingText();
-        const auto&  text    = s.text();
-        size_t       textLen = fcitx_utf8_strlen(text.c_str());
-        unsigned int cursor  = s.cursor();
-        if (textLen == static_cast<size_t>(cursor))
-            realtextLen.store(static_cast<unsigned int>(textLen), std::memory_order_release);
     }
 
     void LotusEngine::handleModeMenuKey(KeyEvent& keyEvent) {

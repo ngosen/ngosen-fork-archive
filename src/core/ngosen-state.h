@@ -148,6 +148,7 @@ namespace ngosen {
         std::string recordedField_;
         void        recordKey(const ngosen::KeyPress& keyEvent);
 
+        void        handleKey(ngosen::KeyPress& keyEvent);
         // The steps of keyEvent, in order. A true result means the key needs nothing more.
         bool     skipsKey(ngosen::KeyPress& keyEvent);
         void     settleBeforeKey();

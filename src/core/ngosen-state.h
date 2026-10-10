@@ -80,6 +80,12 @@ namespace ngosen {
          */
         void reset(bool isFocusOut = false);
 
+        // The field gained focus and its app rule asks for targetMode. Returns true for a focus
+        // bounce: focus left and came back so soon that the word being typed is kept.
+        bool activate(ngosen::Mode targetMode, bool isFocusIn);
+        // The field lost focus (isFocusOut), or the input method was switched away from it.
+        void deactivate(bool isFocusOut);
+
         // Called for every surrounding text report of this input context.
         void surroundingUpdated();
 
@@ -135,7 +141,7 @@ namespace ngosen {
         bool                     isPrevHyphen_          = false;
         bool                     shouldCapitalize_      = false;
         bool                     isPrevPunctuation_     = false;
-        int64_t                  lastDeactivateTime_    = 0;
+        int64_t                  lastDeactivateTime_    = 0;     ///< ms on CLOCK_MONOTONIC
         int64_t                  deletionInterruptedAt_ = 0;     ///< when deactivate() cut an in-flight replacement (0 = none)
         bool                     tracking_modifier_tap_ = false; ///< Selected modifier held, waiting for consecutive keyup
         bool                     macro_skip_            = false; ///< Macro disabled for the current word

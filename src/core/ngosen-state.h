@@ -90,7 +90,8 @@ namespace ngosen {
         bool textAfterCursorChanged(const Surrounding& s) const;
 
         /**
-         * @brief Records text sent to the app, so its cursor moving past it is not taken for a click.
+         * @brief Records text another part of fcitx sent to the app, so its cursor moving past it is not
+         * taken for a click. Our own commits are recorded by commit().
          */
         void noteCommit(const std::string& text);
 
@@ -156,6 +157,8 @@ namespace ngosen {
 
         // Presses real keys through XTEST, for frontends that cannot forward them.
         void sendBackspaceKeys(int count) const;
+        // Sends text to the app and records it as ours.
+        void commit(const std::string& text);
 
         // A report while waiting for the app to apply backspaces or show a selection.
         void onWaitSurroundingUpdated();
@@ -208,6 +211,7 @@ namespace ngosen {
         unsigned int lastSurroundingAnchor_  = 0;
         bool         hasLastSurrounding_     = false;
         unsigned int unreportedCommitLength_ = 0;
+        bool         committing_             = false;
         uint64_t     lastInputAtUs_          = 0; ///< last key or commit, CLOCK_MONOTONIC us
 
         // Last key press seen, to spot one the app sends twice.

@@ -110,8 +110,6 @@ namespace ngosen::test {
     }
 
     void FakeApp::commitText(const std::string& text) {
-        // fcitx tells the typing logic about every commit as it is sent; LotusEngine watches for it.
-        state_->noteCommit(text);
         later(quirks_.lagMs, [this, text] { insert(utf8::decode(text)); });
     }
 
